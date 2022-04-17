@@ -1,0 +1,18 @@
+
+program -> (statement)*;
+
+statement -> expressionStatement | printStatement | varDeclStatement;
+varDeclStatement -> IDENTIFIER IDENTIFIER ("=" expression)? ";";
+expressionStatement -> expression ";";
+printStatement -> "print" "(" expression? ")" ";";
+
+expression -> add_sub;
+add_sub -> mul_div (("+" | "-") mul_div)*;
+mul_divv -> unary (("*" | "/") unary)*;
+unary -> ("!" | "-") unary | parimary;
+primary -> NUMBER | IDENTIFIER | "(" expression ")";
+
+
+/* TARGET */
+int result = 2 + 4 * (9 - 3);
+print(result);

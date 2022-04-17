@@ -1,0 +1,5 @@
+// Let's implement simple line comments too
+int result = 2 + 4 * (9 - 3);
+int default;
+print(result);
+print(default);
