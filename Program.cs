@@ -6,7 +6,7 @@ public class Program {
     public static void Main(string[] args) {
         try {
             Compiler compiler = new Compiler();
-            compiler.AddFile("generated", File.ReadAllText("../../../test.txt"));
+            compiler.AddFile("../../../test.txt", File.ReadAllText("../../../test.txt"));
             AbstractSyntaxTree ast = compiler.CompileToFinalAST();
 
             Interpreter interpreter = new Interpreter(ast);

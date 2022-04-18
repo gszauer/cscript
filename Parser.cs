@@ -30,6 +30,9 @@ namespace CScript {
 
         bool IsVariableType(Token t) {
             return t.Type == TokenType.TYPE_INT ||
+                t.Type == TokenType.TYPE_FLOAT ||
+                t.Type == TokenType.TYPE_CHAR ||
+                t.Type == TokenType.TYPE_BOOL ||
                 t.Type == TokenType.IDENTIFIER;
         }
 
@@ -93,7 +96,7 @@ namespace CScript {
         }
 
         Pass0.Statement ParseVarDeclStatement() {
-            Token variableType = Consume("Invalid variable declaration type: " + Current.Lexeme, TokenType.IDENTIFIER, TokenType.TYPE_INT);
+            Token variableType = Consume("Invalid variable declaration type: " + Current.Lexeme, TokenType.IDENTIFIER, TokenType.TYPE_INT, TokenType.TYPE_FLOAT, TokenType.TYPE_CHAR, TokenType.TYPE_BOOL);
             Token variableName = Consume("Invalid variable declaration name: " + Current.Lexeme, TokenType.IDENTIFIER);
             Pass0.Expression initializer = null;
             if (Current.Type == TokenType.EQUAL) {
@@ -112,7 +115,25 @@ namespace CScript {
         }
 
         Pass0.Expression ParseExpression() {
-            return ParseAddSub();
+            return ParseAssignment();
+        }
+
+        Pass0.Expression ParseAssignment() {
+            Pass0.Expression expr = ParseAddSub();
+
+            if (Current.Type == TokenType.EQUAL) {
+                Consume(TokenType.EQUAL);
+
+                if (expr is Pass0.VariableExpression) {
+                    Pass0.VariableExpression var = (Pass0.VariableExpression)expr;
+                    Pass0.Expression value = ParseAssignment();
+
+                    return new Pass0.AssignmentExpression(var.Name, value);
+                }
+                throw new CompilerException(ExceptionSource.PARSER, expr.Location, "Assignment is only valid for variable expressions");
+            }
+
+            return expr;
         }
 
         Pass0.Expression ParseAddSub() {
@@ -154,8 +175,8 @@ namespace CScript {
         Pass0.Expression ParsePrimary() {
             Token current = Current;
 
-            if (current.Type == TokenType.LIT_NUMBER) {
-                Consume(TokenType.LIT_NUMBER);
+            if (current.Type == TokenType.LIT_NUMBER || current.Type == TokenType.LIT_TRUE || current.Type == TokenType.LIT_FALSE || current.Type == TokenType.LIT_CHAR) {
+                Consume(TokenType.LIT_NUMBER, TokenType.LIT_TRUE, TokenType.LIT_FALSE, TokenType.LIT_CHAR);
                 return new Pass0.LiteralExpression(current);
             }
             else if (current.Type == TokenType.IDENTIFIER) {
@@ -167,6 +188,10 @@ namespace CScript {
                 Pass0.Expression expression = ParseExpression();
                 Consume("Expected matching )", TokenType.RPAREN);
                 return expression;
+            }
+            else if (current.Type == TokenType.LIT_TRUE) {
+                Consume(TokenType.LIT_TRUE);
+                return new Pass0.LiteralExpression(current);
             }
 
             string message = "Unexpected token: " + current.Lexeme;

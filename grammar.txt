@@ -6,11 +6,12 @@ varDeclStatement -> IDENTIFIER IDENTIFIER ("=" expression)? ";";
 expressionStatement -> expression ";";
 printStatement -> "print" "(" expression? ")" ";";
 
-expression -> add_sub;
+expression -> assignment;
+assignment -> IDENTIFIER "=" assignment | add_sub;
 add_sub -> mul_div (("+" | "-") mul_div)*;
 mul_divv -> unary (("*" | "/") unary)*;
 unary -> ("!" | "-") unary | parimary;
-primary -> NUMBER | IDENTIFIER | "(" expression ")";
+primary -> NUMBER | IDENTIFIER | "'" CHAR "'" | "true" | "false" | "(" expression ")";
 
 
 /* TARGET */

@@ -32,7 +32,7 @@ namespace CScript {
             throw new NotImplementedException();
         }
 
-        public string CompileToJavascript() {
+        /*public string CompileToJavascript() {
             AbstractSyntaxTree ast = CompileToFinalAST(); // run the full compiler
             // TODO: Translate to javascript
             throw new NotImplementedException();
@@ -42,18 +42,22 @@ namespace CScript {
             Parser parser = new Parser(mTokens);
             // Serialize the output of parser
             throw new NotImplementedException();
-        }
+        }*/
         public AbstractSyntaxTree CompileToFinalAST() {
-            mTokens.Add(new Token(TokenType.EOF, -1, "generated", "Expected EOF"));
+            mTokens.Add(new Token(TokenType.EOF, -1, "EOF - generated", "Expected EOF"));
             Parser parser = new Parser(mTokens);
             mTokens.RemoveAt(mTokens.Count - 1);
 
             List<Pass0.Statement> program = parser.Program;
             program.AddRange(mSerialized);
 
+            TypeTable typeTable = new TypeTable(program);
+            TypeChecker typeChecker = new TypeChecker(program, typeTable);
+            List<Pass1.Statement> typedProgram = typeChecker.Program;
+
             // TODO: Other passes, lol
 
-            return new AbstractSyntaxTree(program);
+            return new AbstractSyntaxTree(typedProgram, typeTable);
         }
     }
 }

@@ -3,6 +3,8 @@
         COMPILER,
         INTERPRETER,
         PARSER,
-        SCANNER
+        SCANNER,
+        TYPETABLE,
+        TYPECHECKER
     }
 }

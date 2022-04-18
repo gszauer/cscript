@@ -18,7 +18,12 @@
 
             mReserved = new Dictionary<string, TokenType>() {
                 { "int", TokenType.TYPE_INT },
+                { "float", TokenType.TYPE_FLOAT },
+                { "char", TokenType.TYPE_CHAR },
+                { "bool", TokenType.TYPE_BOOL },
                 { "print", TokenType.PRINT },
+                { "true", TokenType.LIT_TRUE },
+                { "false", TokenType.LIT_FALSE },
             };
 
             Token next = NextToken();
@@ -40,6 +45,13 @@
                 }
                 return mSource[mCurrentChar];
             }
+        }
+
+        protected char LookAhead(int howMany) {
+            if (mCurrentChar + howMany >= mSource.Length) {
+                return '\0';
+            }
+            return mSource[mCurrentChar + howMany];
         }
 
         protected string Lexeme {
@@ -89,6 +101,32 @@
                         return new Token(TokenType.SLASH_SLASH, mLine, mFile, Lexeme);
                     }
                     return new Token(TokenType.SLASH, mLine, mFile, Lexeme);                    
+            }
+
+            if (c == '\'') { // Maybe a char literal
+                c = Current; // The ' was already eaten. c is the actual char
+                n = LookAhead(1); // Next is one ahead so if c == \ then we have an escape sequence.
+                                  // If n == ', then we have a normal char. Anything else is an error
+                if (n == '\'') { // 'a'
+                    c = Current;
+                    mCurrentChar++; // Eat char
+                    mCurrentChar++; // Eat closing '
+                    return new Token(TokenType.LIT_CHAR, mLine, mFile, Lexeme);
+                }
+                else if (c == '\\') { // '\t'
+                    c = n; // c now equals the char, eq t
+                    n = LookAhead(2);
+                    if (n == '\'') {
+                        if (c != 't' && c != 'r' && c != 'n' && c != '0') {
+                            throw new CompilerException(ExceptionSource.SCANNER, new Location(mLine, mFile), "Unknown escape character: " + c);
+                        }
+                        mCurrentChar++; // Eat slash
+                        mCurrentChar++; // Eat char
+                        mCurrentChar++; // Eat closing '
+                        return new Token(TokenType.LIT_CHAR, mLine, mFile, Lexeme);
+                    }
+                }
+                throw new CompilerException(ExceptionSource.SCANNER, new Location(mLine, mFile), "Char symbol (') can only contain one character: " + c + ", Next: " + n);
             }
 
             // If it's a number

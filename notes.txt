@@ -23,12 +23,11 @@ I like the way the compiler is being built.
 -- EP 3
 The goal of the second video is to start adding types. 
 
-// And comment should work
-
+// These should work
 int iVal = 2 + 4 * (9 - 3);
 int iDefault;
 
-float fVal = 3.14f;
+float fVal = 3.14;
 float fDefault;
 
 char cVal = 't';
@@ -37,10 +36,41 @@ char cDefault;
 bool bVal = true;
 bool bDefault;
 
-// These should fail
+print(iVal); print ('\n');
+print(fVal); print ('\n');
+print(cVal); print ('\n');
+print(bVal); print ('\n');
 
-print(default);
-print(result);
+// these should work
+iDefault = iVal;
+iVal = 4;
+
+fDefault = fVal;
+fVal = 5.6;
+
+cDefault = cVal;
+cVal = 'G';
+
+bDefault = bVal;
+bVal = false;
+
+print(iVal); print ('\n');
+print(fVal); print ('\n');
+print(cVal); print ('\n');
+print(bVal); print ('\n');
+
+// These should fail
+//iVal = fVal; // Bad type
+//iVal = cVal; // Bad type
+//iVal = bVal; // Bad type
+//fVal = false; // Bad type
+//bVal = 'e'; // Bad type
+//Val = 5.6; // Undeclared
+
+//int fInt = 3.4;
+//bool fBool = 'c';
+//char fChar = 2;
+//float fFloat = false;
 
 We're also going to make the type checker functional. For example, this is valid:
 
@@ -56,12 +86,45 @@ And neither is this
 int a = 8;
 char c = a;
 
-There is no concept of null yet
+There is no concept of null, structs or strings yet
 
 -- EP 4
 Functions
 
-We're going to make functions work.
+We're going to make functions work. They do not need to be dynamic just yet. Making functions work also implies making global
+variables work. We will need support for shadowing. Also, variables and functions needing to be pre-installed into the environment
+comes from this step. Since the type checker is esponsible for this, we will need to install the functions right after installing the 
+built in (and later custom) types and install the variables only after. Global variables can have constant initializers. Functions can
+No longer be called at the top level, the runtime will need to call that run function.
+
+The goal is going to be to run this:
+
+bool a = false;
+int b;
+
+void run() {
+	print ('a'); print(':'); print(' '); print (a); print ('\n');
+	int a = 8;
+	print ('a'); print(':'); print(' '); print (a); print ('\n');
+
+	PrintHello();
+	print ('a'); print(':'); print(' '); print (a); print ('\n');
+	char c;
+}
+
+void PrintHello() {
+	char a = 'b';
+	print ('a'); print(':'); print(' '); print (a); print ('\n');
+	
+	print('h');
+	print('e');
+	print('l');
+	print('l');
+	print('o');
+	print('\n');
+}
+
+After Part 4 is done, i should write a LOT of tests.
 
 -- EP 5
 Test Framework. Now that functions are working, it makes sense to start creating automated tests.
@@ -80,10 +143,10 @@ Arrays
 Enumerations
 
 -- EP 8
-Multi Methods
+Multi Methods and dynamic functions
 
 -- EP 9
-Delegates
+Delegates 
 
 -- EP 10
 Operators
@@ -129,3 +192,106 @@ The default value for it is '0 as ms'. We should be able to cast both integers a
 to milliseconds with the 'as' keyword. And 'is' should work too. 
 ms is also callable, calling it would return the current time in milliseconds (since app startup).
 Internally, runfor takes a ms as it's argument, but both int and float are accepted and auto cast
+
+
+:: Second script notes
+Compiler steps
+* Start out with a string of characters
+	* Plain text
+* Scan them into a list of tokens
+	* The pre-processor should run at this state
+* Parse the tokens into a tree
+	* This tree does not know about types AT ALL!
+	* The tree does not care what's in it, it only cares that it's a valid structure
+* Collect types
+	* Collect info about top level declarations only
+	* Should know the details of all 
+		* Structures
+		* Functions
+		* Enums
+		* Delegates
+		* Operators
+* Do type checking
+	* Remove enumerations from AST
+	* Make sure that every expression has a type.
+	* Make sure that all types are valid, everywhere
+	* As far as call expressions go, the type checker only cares if it's callable at this point.
+* Resolve functions
+	* Make sure a void function does not return anything
+	* Make sure a non void function does return something
+	* Type check a calls return and what it's being assigned to
+	* Convert Call expression to:
+		* Static call expression
+		* Dynamic call expression
+		* Delegate call expression
+		* Operator call expression
+		* DefaultConstructor call expression
+
+I'm not sure how to handle arrays
+
+Generated
+	* Since $ isn't a valid start to a variable name, any generated types in the type table start with $
+	* Make null into a special token?? Is it not already? it can stay an object type
+	* Keep in mind that 
+
+Variables
+	* Basic types are: int, float, bool, char, string, object
+	* Defaults for each : 0, 0.0, false, '\0', null, null
+	* Global variables can only have literal initializers, IE:
+		* float PI = 3.14; is ok, but
+		* float PI = _SOME_OTHER_VARIABLE; is not
+	* Variables inside a function can be initialized to any expression
+	* Variables can be shadowed
+
+Enumerations
+	TODO
+
+Structs
+	* Can only be declared at the global scope
+	* Is just a collection of variables
+	* Passed around by reference
+
+Arrays
+	* Attach brackets to the data type when declaring an array
+	* Arrys are objects
+	* The default value of any array is null
+
+Control Flow
+	* if/else
+	* while
+	* for
+
+Functions
+	* Can only be declared at the global scope
+	* Can be overloaded
+		* An overloaded function is a multi-function
+	* By default function calls are static
+		* If multiple exact matches are found, the function is ambigous
+		* If no exact match is found, the candidate with the fewest number of implicit to object casts is chosen
+			* If there are multiple candidates with the lowest number, the function is ambigous
+	* If a function argument is an object it can become dynamic, this means the function will be resolved at runtime, not compile time
+		* Runtime function selection should work the same way that compile time function selection works
+
+Delegates
+	* similar syntax to C#:
+		* delegate num BinaryOperator(num x, num y);
+	* Every generated function should be registered globally, with a unique generated name
+		* The delegate call refers to this name
+
+Operators
+	TODO: new operator for custom constructor
+
+Pre-processor:
+	* C / C++ / C# like
+	* basically an integer calculator
+
+Type interface
+	* built in primitive types: int, float, bool, char
+	* a struct is a usertype
+	* an object can be anything, like in c#
+	* the as operator will attempt to cast an object back to what it really was
+		* Will return a default value (0, 0.0, false, '\0', null) on fail
+	* the is operator will return true / false checking an objects
+	* There should be a built in 'type', and a typeof operator
+	* null has a type of object
+	* there is no inheritance, object is simply for type erasure

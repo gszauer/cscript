@@ -13,8 +13,15 @@
         EQUAL,
         NOT,
 
-        TYPE_INT,
-        LIT_NUMBER,
+        TYPE_INT, 
+        TYPE_FLOAT,
+        TYPE_BOOL,
+        TYPE_CHAR, 
+
+        LIT_NUMBER, 
+        LIT_TRUE,
+        LIT_FALSE,
+        LIT_CHAR,
 
         EOF,
     }
