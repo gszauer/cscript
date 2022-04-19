@@ -1,10 +1,12 @@
 ﻿namespace CScript {
     namespace Pass1 {
 
-        interface StatementVisitor<T> {
-            T VisitPrintStatement(PrintStatement stmt, Object misc);
-            T VisitVarDeclStatement(VarDeclStatement stmt, Object misc);
-            T VisitExpressionStatement(ExpressionStatement stmt, Object misc);
+        interface StatementVisitor<T, V> {
+            T VisitPrintStatement(PrintStatement stmt, V misc);
+            T VisitVarDeclStatement(VarDeclStatement stmt, V misc);
+            T VisitExpressionStatement(ExpressionStatement stmt, V misc);
+            T VisitFunDeclStatement(FunDeclStatement stmt, V misc);
+            T VisitBlockStatement(BlockStatement stmt, V misc);
         }
         class Statement {
             public Location Location { get; protected set; }
@@ -13,7 +15,7 @@
                 Location = location;
             }
 
-            public virtual T Accept<T>(StatementVisitor<T> visitor, Object o) {
+            public virtual T Accept<T, V>(StatementVisitor<T, V> visitor, V o) {
                 throw new NotImplementedException();
             }
         }
@@ -24,7 +26,7 @@
             public PrintStatement(Location t, Expression e) : base(t) {
                 Expression = e;
             }
-            public override T Accept<T>(StatementVisitor<T> visitor, object o) {
+            public override T Accept<T, V>(StatementVisitor<T, V> visitor, V o) {
                 return visitor.VisitPrintStatement(this, o);
             }
         }
@@ -39,7 +41,7 @@
                 Name = name.Lexeme;
             }
 
-            public override T Accept<T>(StatementVisitor<T> visitor, object o) {
+            public override T Accept<T, V>(StatementVisitor<T, V> visitor, V o) {
                 return visitor.VisitVarDeclStatement(this, o);
             }
         }
@@ -51,8 +53,48 @@
                 Expression = e;
             }
 
-            public override T Accept<T>(StatementVisitor<T> visitor, object o) {
+            public override T Accept<T, V>(StatementVisitor<T, V> visitor, V o) {
                 return visitor.VisitExpressionStatement(this, o);
+            }
+        }
+
+        class FunParamater {
+            public Location Location { get; protected set; }
+            public string Name { get; protected set; }
+            public TypeId Type { get; protected set; }
+
+            public FunParamater(TypeId type, string name, Location location) {
+                Type = type;
+                Name = name;
+                Location = location;
+            }
+        }
+
+        class FunDeclStatement : Statement {
+            public TypeId ReturnType { get; protected set; }
+            public string Name { get; protected set; }
+            public List<FunParamater> Paramaters { get; protected set;}
+            public List<Statement> Body { get; protected set; }
+
+            public FunDeclStatement(TypeId returnType, Token name, List<FunParamater> parameters, List<Statement> body) : base(name.Location) {
+                ReturnType = returnType;
+                Name = name.Lexeme;
+                Paramaters = parameters;
+                Body = body;
+            }
+
+            public override T Accept<T, V>(StatementVisitor<T, V> visitor, V o) {
+                return visitor.VisitFunDeclStatement(this, o);
+            }
+        }
+
+        class BlockStatement : Statement {
+            public List<Statement> Body { get; set; }
+            public BlockStatement(Location location, List<Statement> body) : base(location) {
+                Body = body;
+            }
+            public override T Accept<T, V>(StatementVisitor<T, V> visitor, V o) {
+                return visitor.VisitBlockStatement(this, o);
             }
         }
     }

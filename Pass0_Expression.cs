@@ -1,11 +1,12 @@
 ﻿namespace CScript {
     namespace Pass0 { 
-        interface ExpressionVisitor<T> {
-            T VisitBinaryExpression(BinaryExpression expr, object misc);
-            T VisitUnaryExpression(UnaryExpression expr, object misc);
-            T VisitLiteralExpression(LiteralExpression expr, object misc);
-            T VisitVariableExpression(VariableExpression expr, object misc);
-            T VisitAssignmentExpression(AssignmentExpression expr, object misc);
+        interface ExpressionVisitor<T, V> {
+            T VisitBinaryExpression(BinaryExpression expr, V misc);
+            T VisitUnaryExpression(UnaryExpression expr, V misc);
+            T VisitLiteralExpression(LiteralExpression expr, V misc);
+            T VisitVariableExpression(VariableExpression expr, V misc);
+            T VisitAssignmentExpression(AssignmentExpression expr, V misc);
+            T VisitCallExpression(CallExpression expr, V misc);
         }
         class Expression {
             public Token Token { get; protected set; }
@@ -19,7 +20,7 @@
                 Token = token;
             }
 
-            public virtual T Accept<T>(ExpressionVisitor<T> visitor, Object o) {
+            public virtual T Accept<T, V>(ExpressionVisitor<T, V> visitor, V o) {
                 throw new NotImplementedException();
             }
         }
@@ -33,7 +34,7 @@
                 Operator = op;
             }
 
-            public override T Accept<T>(ExpressionVisitor<T> visitor, Object o) {
+            public override T Accept<T, V>(ExpressionVisitor<T, V> visitor, V o) {
                 return visitor.VisitBinaryExpression(this, o);
             }
         }
@@ -46,7 +47,7 @@
                 Operator = op;
             }
 
-            public override T Accept<T>(ExpressionVisitor<T> visitor, Object o) {
+            public override T Accept<T, V>(ExpressionVisitor<T, V> visitor, V o) {
                 return visitor.VisitUnaryExpression(this, o);
             }
         }
@@ -65,7 +66,7 @@
             public LiteralExpression(Token token) : base(token) {
             }
 
-            public override T Accept<T>(ExpressionVisitor<T> visitor, Object o) {
+            public override T Accept<T, V>(ExpressionVisitor<T, V> visitor, V o) {
                 return visitor.VisitLiteralExpression(this, o);
             }
         }
@@ -77,7 +78,7 @@
                 Name = token;
             }
 
-            public override T Accept<T>(ExpressionVisitor<T> visitor, Object o) {
+            public override T Accept<T, V>(ExpressionVisitor<T, V> visitor, V o) {
                 return visitor.VisitVariableExpression(this, o);
             }
         }
@@ -89,8 +90,22 @@
                 Name = name;
                 Value = value;
             }
-            public override T Accept<T>(ExpressionVisitor<T> visitor, Object o) {
+            public override T Accept<T, V>(ExpressionVisitor<T, V> visitor, V o) {
                 return visitor.VisitAssignmentExpression(this, o);
+            }
+        }
+
+        class CallExpression : Expression {
+            public Expression Calee { get; protected set; }
+            public Token CallSite { get; protected set; }
+            public List<Expression> Arguments { get; protected set; }
+            public CallExpression(Expression callee, Token callSite, List<Expression> arguments) : base(callSite) {
+                Calee = callee;
+                Arguments = arguments;
+                CallSite = callSite;
+            }
+            public override T Accept<T, V>(ExpressionVisitor<T, V> visitor, V o) {
+                return visitor.VisitCallExpression(this, o);
             }
         }
     }

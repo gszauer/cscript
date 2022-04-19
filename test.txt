@@ -1,48 +1,36 @@
-// These should work
-int iVal = 2 + 4 * (9 - 3);
-int iDefault;
+bool a = false;
+int b;
 
-float fVal = 3.14;
-float fDefault;
+//void g; // SHOULD BREAK
+//int g = void; // SHOULD BREAK
 
-char cVal = 't';
-char cDefault;
+void run() {
+	print ('a'); print(':'); print(' '); print (a); print ('\n');
+	int a = 8;
+	print ('a'); print(':'); print(' '); print (a); print ('\n');
+	{
+		float a = 3.14;
+		print ('a'); print(':'); print(' '); print (a); print ('\n');
+		char x;
+	}
+	//print(x); // Should be an error
 
-bool bVal = true;
-bool bDefault;
+	PrintHello();
+	print ('a'); print(c); print(s); print (a); print ('\n');
+	char c;
+}
 
-print(iVal); print ('\n');
-print(fVal); print ('\n');
-print(cVal); print ('\n');
-print(bVal); print ('\n');
+char c = ':';
+char s = ' ';
 
-// these should work
-iDefault = iVal;
-iVal = 4;
-
-fDefault = fVal;
-fVal = 5.6;
-
-cDefault = cVal;
-cVal = 'G';
-
-bDefault = bVal;
-bVal = false;
-
-print(iVal); print ('\n');
-print(fVal); print ('\n');
-print(cVal); print ('\n');
-print(bVal); print ('\n');
-
-// These should fail
-//iVal = fVal; // Bad type
-//iVal = cVal; // Bad type
-//iVal = bVal; // Bad type
-//fVal = false; // Bad type
-//bVal = 'e'; // Bad type
-//Val = 5.6; // Undeclared
-
-//int fInt = 3.4;
-//bool fBool = 'c';
-//char fChar = 2;
-//float fFloat = false;
+void PrintHello() {
+	char a = 'b';
+	print ('a'); print(':'); print(' '); print (a); print ('\n');
+	
+	print('h');
+	print('e');
+	print('l');
+	print('l');
+	print('o');
+	print('\n');
+}

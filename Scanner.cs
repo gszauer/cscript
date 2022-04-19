@@ -93,6 +93,9 @@
                 case ';': return new Token(TokenType.SEMICOLON, mLine, mFile, Lexeme);
                 case '=': return new Token(TokenType.EQUAL, mLine, mFile, Lexeme);
                 case '!': return new Token(TokenType.NOT, mLine, mFile, Lexeme);
+                case '{': return new Token(TokenType.LBRACE, mLine, mFile, Lexeme);
+                case '}': return new Token(TokenType.RBRACE, mLine, mFile, Lexeme);
+                case ',': return new Token(TokenType.COMMA, mLine, mFile, Lexeme);
                 case '/':
                     if (n == '/') {
                         while (Current != '\n' && mCurrentChar < mSource.Length) {

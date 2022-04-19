@@ -102,15 +102,27 @@ The goal is going to be to run this:
 bool a = false;
 int b;
 
+//void g; // SHOULD BREAK
+//int g = void; // SHOULD BREAK
+
 void run() {
 	print ('a'); print(':'); print(' '); print (a); print ('\n');
 	int a = 8;
 	print ('a'); print(':'); print(' '); print (a); print ('\n');
+	{
+		float a = 3.14;
+		print ('a'); print(':'); print(' '); print (a); print ('\n');
+		char x;
+	}
+	//print(x); // Should be an error
 
 	PrintHello();
-	print ('a'); print(':'); print(' '); print (a); print ('\n');
+	print ('a'); print(c); print(s); print (a); print ('\n');
 	char c;
 }
+
+char c = ':';
+char s = ' ';
 
 void PrintHello() {
 	char a = 'b';

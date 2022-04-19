@@ -10,10 +10,10 @@ namespace CScript {
             mTokens = tokens;
             mCurrent = 0;
 
-            Pass0.Statement statement = ParseStatement();
+            Pass0.Statement statement = ParseDeclaration();
             while (statement != null) {
                 Program.Add(statement);
-                statement = ParseStatement();
+                statement = ParseDeclaration();
             }
 
             mTokens = null;
@@ -34,6 +34,15 @@ namespace CScript {
                 t.Type == TokenType.TYPE_CHAR ||
                 t.Type == TokenType.TYPE_BOOL ||
                 t.Type == TokenType.IDENTIFIER;
+        }
+
+        Token ConsumeVariableType() {
+            if (IsVariableType(Current)) {
+                Token t = Current;
+                mCurrent++;
+                return t;
+            }
+            throw new CompilerException(ExceptionSource.PARSER, Current.Location, "Trying to access invalid return type: " + Current.Lexeme);
         }
 
         Token Peek(int howMany) {
@@ -63,23 +72,72 @@ namespace CScript {
             return Consume(error, types);
         }
 
-        Pass0.Statement ParseStatement() {
+        Pass0.Statement ParseDeclaration() {
             if (Current.Type == TokenType.EOF) {
                 return null;
             }
 
+            if (IsVariableType(Current) && Peek(1).Type == TokenType.IDENTIFIER) {
+                if (Peek(2).Type == TokenType.EQUAL || Peek(2).Type == TokenType.SEMICOLON) {
+                    return ParseVarDeclStatement();
+                }
+                else if (Peek(2).Type == TokenType.LPAREN) {
+                    return ParseFunDeclStatement();
+                }
+            }
+
+            throw new CompilerException(ExceptionSource.PARSER, Current.Location, "Error parsing top level declaration. Only variable and function declarations are allowed at the top level. Lexeme: " + Current.Lexeme);
+        }
+
+        Pass0.Statement ParseFunDeclStatement() {
+            Token returnType = ConsumeVariableType();
+            Token functionName = Consume("Function name can only be an identifier", TokenType.IDENTIFIER);
+            Consume("Function name must be followed by (", TokenType.LPAREN);
+            List<Pass0.FunParamater> paramaters = new List<Pass0.FunParamater>();
+            while(Current.Type != TokenType.RPAREN && Current.Type != TokenType.EOF) {
+                Token paramType = ConsumeVariableType();
+                Token paramName = Consume("Param name can only be an identifier", TokenType.IDENTIFIER);
+                Pass0.FunParamater param = new Pass0.FunParamater(paramType, paramName);
+                if (Current.Type == TokenType.COMMA) {
+                    Consume(TokenType.COMMA);
+                }
+            }
+            Consume("Function argument list must be followed by )", TokenType.RPAREN);
+
+            Consume("Function arguments must be followed by {", TokenType.LBRACE);
+            List<Pass0.Statement> functionBody = new List<Pass0.Statement>();
+            while (Current.Type != TokenType.RBRACE && Current.Type != TokenType.EOF) {
+                functionBody.Add(ParseStatement());
+            }
+            Consume("Function body must be followed by }", TokenType.RBRACE);
+
+            return new Pass0.FunDeclStatement(returnType, functionName, paramaters, functionBody);
+        }
+
+        Pass0.Statement ParseStatement() {
             if (Current.Type == TokenType.PRINT) {
                 return ParsePrintStatement();
+            }
+            else if (Current.Type == TokenType.LBRACE) {
+                return ParseBlockStatement();
             }
             if (IsVariableType(Current) && Peek(1).Type == TokenType.IDENTIFIER) {
                 if (Peek(2).Type == TokenType.EQUAL || Peek(2).Type == TokenType.SEMICOLON) {
                     return ParseVarDeclStatement();
                 }
-                // Functions
             }
             return ParseExpressionStatement();
         }
 
+        Pass0.Statement ParseBlockStatement() {
+            Token brace = Consume("Block statement must start with {", TokenType.LBRACE);
+            List<Pass0.Statement> body = new List<Pass0.Statement>();
+            while (Current.Type != TokenType.RBRACE && Current.Type != TokenType.EOF) {
+                body.Add(ParseStatement());
+            }
+            Consume("Block statement must end with }", TokenType.RBRACE);
+            return new Pass0.BlockStatement(brace, body);
+        }
         Pass0.Statement ParsePrintStatement() {
             Token print = Consume(TokenType.PRINT);
             Consume("Expected '(' after print keyword", TokenType.LPAREN);
@@ -96,7 +154,7 @@ namespace CScript {
         }
 
         Pass0.Statement ParseVarDeclStatement() {
-            Token variableType = Consume("Invalid variable declaration type: " + Current.Lexeme, TokenType.IDENTIFIER, TokenType.TYPE_INT, TokenType.TYPE_FLOAT, TokenType.TYPE_CHAR, TokenType.TYPE_BOOL);
+            Token variableType = ConsumeVariableType();
             Token variableName = Consume("Invalid variable declaration name: " + Current.Lexeme, TokenType.IDENTIFIER);
             Pass0.Expression initializer = null;
             if (Current.Type == TokenType.EQUAL) {
@@ -169,7 +227,32 @@ namespace CScript {
                 return new Pass0.UnaryExpression(_operator, expression);
             }
 
-            return ParsePrimary();
+            return ParseCall();
+        }
+
+        Pass0.Expression ParseCall() {
+            Pass0.Expression callee = ParsePrimary();
+
+            while(Current.Type == TokenType.LPAREN) {
+                Token callSite = Consume(TokenType.LPAREN);
+
+                List<Pass0.Expression> args = new List<Pass0.Expression>();
+                while(Current.Type != TokenType.RPAREN && Current.Type != TokenType.EOF) {
+                    args.Add(ParseExpression());
+                    if (Current.Type == TokenType.COMMA) {
+                        Consume(TokenType.COMMA);
+                    }
+                }
+
+                if (!(callee is Pass0.VariableExpression || callee is Pass0.CallExpression)) {
+                    throw new CompilerException(ExceptionSource.PARSER, callee.Location, "Calee must be a variable or call expression");
+                }
+
+                callee = new Pass0.CallExpression(callee, callSite, args);
+                Consume("Call expression must end with )", TokenType.RPAREN);
+            }
+
+            return callee;
         }
 
         Pass0.Expression ParsePrimary() {

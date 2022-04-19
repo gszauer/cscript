@@ -2,6 +2,8 @@
     public enum TokenType {
         LPAREN,
         RPAREN,
+        LBRACE,
+        RBRACE,
         PLUS,
         MINUS,
         STAR,
@@ -12,6 +14,7 @@
         IDENTIFIER,
         EQUAL,
         NOT,
+        COMMA,
 
         TYPE_INT, 
         TYPE_FLOAT,

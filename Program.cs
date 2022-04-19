@@ -10,7 +10,7 @@ public class Program {
             AbstractSyntaxTree ast = compiler.CompileToFinalAST();
 
             Interpreter interpreter = new Interpreter(ast);
-            //interpreter.RunFunction("run");
+            interpreter.RunFunction("run");
         }
         catch (CompilerException e) {
             Console.WriteLine(e.Message);

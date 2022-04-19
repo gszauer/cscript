@@ -1,19 +1,22 @@
 
-program -> (statement)*;
+program -> (declaration)*;
 
-statement -> expressionStatement | printStatement | varDeclStatement;
+declaration = varDeclStatement | funDeclStatement;
 varDeclStatement -> IDENTIFIER IDENTIFIER ("=" expression)? ";";
+funDeclStatement -> IDENTIFIER IDENTIFIER "(" funParamaters? ")" blockStatement;
+
+statement -> expressionStatement | printStatement | varDeclStatement | blockStatement;
 expressionStatement -> expression ";";
 printStatement -> "print" "(" expression? ")" ";";
+blockStatement -> "{" statement* "}";
 
 expression -> assignment;
 assignment -> IDENTIFIER "=" assignment | add_sub;
 add_sub -> mul_div (("+" | "-") mul_div)*;
 mul_divv -> unary (("*" | "/") unary)*;
-unary -> ("!" | "-") unary | parimary;
-primary -> NUMBER | IDENTIFIER | "'" CHAR "'" | "true" | "false" | "(" expression ")";
+unary -> ("!" | "-") unary | call;
+call -> primary (" callArguments? ")";
+primary -> NUMBER | IDENTIFIER | CHAR | "true" | "false" | "(" expression ")";
 
-
-/* TARGET */
-int result = 2 + 4 * (9 - 3);
-print(result);
+funParamaters -> IDENTIFIER IDENTIFIER ("," IDENTIFIER IDENTIFIER )*;
+callArguments -> expression ("," expression)*;
