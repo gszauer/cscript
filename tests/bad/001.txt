@@ -1,0 +1,37 @@
+// Invalid variable type
+
+bool a = false;
+int b;
+
+void g; // Declaring variable that has a bad type
+
+void run() {
+	print ('a'); print(':'); print(' '); print (a); print ('\n');
+	int a = 8;
+	print ('a'); print(':'); print(' '); print (a); print ('\n');
+	{
+		float a = 3.14;
+		print ('a'); print(':'); print(' '); print (a); print ('\n');
+		char x;
+	}
+	//print(x); // Should be an error
+
+	PrintHello();
+	print ('a'); print(c); print(s); print (a); print ('\n');
+	char c;
+}
+
+char c = ':';
+char s = ' ';
+
+void PrintHello() {
+	char a = 'b';
+	print ('a'); print(':'); print(' '); print (a); print ('\n');
+	
+	print('h');
+	print('e');
+	print('l');
+	print('l');
+	print('o');
+	print('\n');
+}

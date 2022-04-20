@@ -1,0 +1,17 @@
+// Bad allocation
+
+int iVal = 2 + 4 * (9 - 3);
+int iDefault;
+
+float fVal = 3.14;
+float fDefault;
+
+char cVal = 't';
+char cDefault;
+
+bool bVal = true;
+bool bDefault;
+
+void run() {
+	bVal = 'e'; // Bad type
+}

@@ -24,6 +24,8 @@
                 { "print", TokenType.PRINT },
                 { "true", TokenType.LIT_TRUE },
                 { "false", TokenType.LIT_FALSE },
+                { "return", TokenType.RETURN },
+                { "void", TokenType.TYPE_VOID },
             };
 
             Token next = NextToken();

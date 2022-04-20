@@ -7,6 +7,7 @@
             T VisitExpressionStatement(ExpressionStatement stmt, V misc);
             T VisitFunDeclStatement(FunDeclStatement stmt, V misc);
             T VisitBlockStatement(BlockStatement stmt, V misc);
+            T VisitReturnStatement(ReturnStatement stmt, V misc);
         }
         class Statement {
             public Location Location { get; protected set; }
@@ -89,12 +90,23 @@
         }
 
         class BlockStatement : Statement {
-            public List<Statement> Body { get; set; }
+            public List<Statement> Body { get; protected set; }
             public BlockStatement(Location location, List<Statement> body) : base(location) {
                 Body = body;
             }
             public override T Accept<T, V>(StatementVisitor<T, V> visitor, V o) {
                 return visitor.VisitBlockStatement(this, o);
+            }
+        }
+
+        class ReturnStatement : Statement {
+            public Expression ReturnValue { get; protected set; }
+
+            public ReturnStatement(Location location, Expression e) : base(location) {
+                ReturnValue = e;
+            }
+            public override T Accept<T, V>(StatementVisitor<T, V> visitor, V o) {
+                return visitor.VisitReturnStatement(this, o);
             }
         }
     }

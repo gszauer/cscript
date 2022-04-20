@@ -1,0 +1,2 @@
+TYPECHECKER error on line: 16, in file: ../../../tests/bad/008.txt
+Error: Trying to assign fVal to bool when it's declared as: float

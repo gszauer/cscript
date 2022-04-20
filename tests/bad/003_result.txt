@@ -1,0 +1,2 @@
+TYPECHECKER error on line: 14, in file: ../../../tests/bad/003.txt
+Error: Trying to access undeclared variable: x

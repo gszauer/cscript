@@ -15,11 +15,13 @@
         EQUAL,
         NOT,
         COMMA,
+        RETURN,
 
         TYPE_INT, 
         TYPE_FLOAT,
         TYPE_BOOL,
         TYPE_CHAR, 
+        TYPE_VOID,
 
         LIT_NUMBER, 
         LIT_TRUE,

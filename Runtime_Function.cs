@@ -48,6 +48,9 @@ namespace CScript {
 
                 foreach(Pass1.Statement s in mFunctionBody) {
                     StatementResult result = runtime.ExecuteStatement(s, functionEnv);
+                    if (result.Type == StatementResultType.RETURN) {
+                        return result.Return;
+                    }
                     if (result.Type != StatementResultType.NORMAL) {
                         throw new NotImplementedException();
                     }

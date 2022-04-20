@@ -1,0 +1,2 @@
+TYPECHECKER error on line: 16, in file: ../../../tests/bad/011.txt
+Error: Trying to initialize fInt to float when it's declared as: int

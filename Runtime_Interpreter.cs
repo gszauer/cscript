@@ -1,13 +1,16 @@
 ﻿namespace CScript {
     namespace Runtime {
         enum StatementResultType {
-            NORMAL
+            NORMAL,
+            RETURN
         }
         class StatementResult {
             public StatementResultType Type { get; protected set; }
+            public object Return { get; protected set; }
 
-            public StatementResult(StatementResultType type) {
-                this.Type = type;
+            public StatementResult(StatementResultType type, Object returnValue) {
+                Type = type;
+                Return = returnValue;
             }
 
             public StatementResult() {
@@ -15,16 +18,24 @@
             }
         }
         class Interpreter : Pass1.ExpressionVisitor<object, Environment>, Pass1.StatementVisitor<StatementResult, Environment> {
+            public delegate void CustomPrint(string message);
             public Environment Global { get; protected set; }
             protected TypeTable Types;
+            protected CustomPrint PrintHandler;
             public Interpreter(AbstractSyntaxTree ast) {
                 Global = new Environment(null);
                 Types = ast.Types;
+                PrintHandler = null;
 
                 foreach (Pass1.Statement s in ast.Program) {
                     ExecuteStatement(s, Global);
                 }
             }
+
+            public void UseCustomPrint(CustomPrint printHandler) {
+                PrintHandler = printHandler;
+            }
+
             public void RunFunction(string name) {
                 object function = Global.Get(name, new Location(-1, "runtime"));
                 if (!(function is Function)) {
@@ -165,6 +176,15 @@
 
                 return function.Call(this, env, args);
             }
+
+            public StatementResult VisitReturnStatement(Pass1.ReturnStatement stmt, Environment env) {
+                object val = null;
+                if (stmt.ReturnValue != null) {
+                    val = EvaluateExpression(stmt.ReturnValue, env);
+                }
+
+                return new StatementResult(StatementResultType.RETURN, val);
+            }
             public StatementResult VisitPrintStatement(Pass1.PrintStatement stmt, Environment misc) {
                 object obj = EvaluateExpression(stmt.Expression, misc);
 
@@ -173,7 +193,12 @@
                 }
 
                 if (obj is int || obj is double || obj is bool || obj is char) {
-                    Console.Write(obj.ToString());
+                    if (PrintHandler != null) {
+                        PrintHandler(obj.ToString());
+                    }
+                    else { 
+                        Console.Write(obj.ToString());
+                    }
                     return new StatementResult();
                 }
 
@@ -202,6 +227,9 @@
                 Environment block = new Environment(env);
                 foreach(Pass1.Statement e in stmt.Body) {
                     StatementResult result = ExecuteStatement(e, block);
+                    if (result.Type == StatementResultType.RETURN) {
+                        return new StatementResult(StatementResultType.RETURN, result.Return);
+                    }
                     if (result.Type != StatementResultType.NORMAL) {
                         throw new NotImplementedException();
                     }

@@ -7,6 +7,7 @@
             T VisitExpressionStatement(ExpressionStatement stmt, V misc);
             T VisitFunDeclStatement(FunDeclStatement stmt, V misc);
             T VisitBlockStatement(BlockStatement stmt, V misc);
+            T VisitReturnStatement(ReturnStatement stmt, V misc);
         }
         class Statement {
             public Token Token { get; protected set; }
@@ -97,6 +98,17 @@
 
             public override T Accept<T, V>(StatementVisitor<T, V> visitor, V o) {
                 return visitor.VisitBlockStatement(this, o);
+            }
+        }
+
+        class ReturnStatement : Statement {
+            public Expression ReturnValue { get; protected set; }
+
+            public ReturnStatement(Token keyword, Expression value) : base(keyword) {
+                ReturnValue = value;
+            }
+            public override T Accept<T, V>(StatementVisitor<T, V> visitor, V o) {
+                return visitor.VisitReturnStatement(this, o);
             }
         }
     }

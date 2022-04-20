@@ -26,7 +26,7 @@ namespace CScript {
                 if (mParent != null) {
                     return mParent.GetVariableType(name, location);
                 }
-                throw new CompilerException(ExceptionSource.TYPECHECKER, location, "Trying to access undeclared type: " + name);
+                throw new CompilerException(ExceptionSource.TYPECHECKER, location, "Trying to access undeclared variable: " + name);
             }
             return mDeclaredTypes[name];
         }

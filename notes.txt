@@ -127,57 +127,104 @@ char s = ' ';
 void PrintHello() {
 	char a = 'b';
 	print ('a'); print(':'); print(' '); print (a); print ('\n');
+
+	int result = AddNums(7, 8);
 	
 	print('h');
 	print('e');
 	print('l');
 	print('l');
 	print('o');
+	print(' ');
+	print(result);
 	print('\n');
 }
 
+int AddNums(int a, int b) {
+	return a + b;
+}
+
 After Part 4 is done, i should write a LOT of tests.
+
+I forgot, but return statements should be implemented here too. Done in part 5, added to test here
 
 -- EP 5
 Test Framework. Now that functions are working, it makes sense to start creating automated tests.
 Automated tests will be divided into 3 categories: success, fail_compile, fail_runtime
 
--- EP 5
-Objects and structs. In addition to implementing structs, and type erasure trough the object type
+-- EP 6
+Objects and structs and strings. In addition to implementing structs, and type erasure trough the object type
 this section will also introduce the "type" to the language, as well as is, as
 type is both a data type and a callable. The callable version of type is what returns the runtime
 type of an object.
 
--- EP 6
-Arrays
+Type is going to be implemented as a hybrid. Much like there is a print expression, i want to create
+A type expression. That comes from "type" "(" expression ")" being found anywhere an expression is valid
+This is the only way to get a valid type back. This is where the hybrid comes in. type is now a built-in 
+type just like int. and type() is the only way to create a literal of it. Oh boy....
+
+// FIRST, Let's get type going
+
+type seven; // Like an int, a type should never be null. We will have it default to $invalid
+
+void run() {
+	type intType = type(int); // Can enter data types in there
+	//type(void); // But NOT VOID
+	intType = type(45); // Or literals
+	int val = 4;
+	intType = type(val); // Can deduce the type of the expression.
+
+	print ("47 is an integer: " + (47 is int));
+	print ("47 is an char: " + (47 is char));
+	print ("47 is a float: " + (47 is float));
+
+	print ("47 as an integer: " + (47 as int));
+	print ("47 as an char: " + (47 as char));
+	print ("47 as a float: " + (47 as float));
+}
+
+// THEN objects
+
+struct Vec3() {
+	int x = 0; // Valid
+	int y; // Valid
+	int z; // = GetZero(); // ERROR
+}
+
+// THEN type erasure
+
+// And finally strings
 
 -- EP 7
-Enumerations
-
--- EP 8
-Multi Methods and dynamic functions
+Arrays
 
 -- EP 9
-Delegates 
+Enumerations
 
 -- EP 10
-Operators
+Multi Methods and dynamic functions
 
 -- EP 11
-Control Flow
+Delegates 
 
 -- EP 12
-Emit Javascript. Also, how does someone do a javascript source map?
+Operators
 
 -- EP 13
-Compiler options. Need to add support for external declarations that the runtime can later hook up.
+Control Flow, missing operators
+
+-- EP 14
+Emit Javascript. Also, how does someone do a javascript source map?
+
+-- EP 15
+Compiler options / javascript integrtion. Need to add support for external declarations that the runtime can later hook up.
 Also, add the option to pre-compile code for easy distribution. This is static linking only
 Maybe also consider beefing up the runtime. Like add arguments to the "Run" function of the interpreter?
 
--- EP 13
+-- EP 16
 Making a self hosted compiler, and running it online.
 
--- EP 14
+-- EP 17
 Kind of a stretch, but VS Code Integration?
 
 -- HIGH IDEAS runfor

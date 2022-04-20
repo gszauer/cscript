@@ -5,10 +5,12 @@ namespace CScript {
 
         protected List<Token> mTokens;
         protected int mCurrent;
+        protected Token mCurrentFunctionReturnType;
         public Parser(List<Token> tokens) {
             Program = new List<Pass0.Statement>();
             mTokens = tokens;
             mCurrent = 0;
+            mCurrentFunctionReturnType = null;
 
             Pass0.Statement statement = ParseDeclaration();
             while (statement != null) {
@@ -42,7 +44,7 @@ namespace CScript {
                 mCurrent++;
                 return t;
             }
-            throw new CompilerException(ExceptionSource.PARSER, Current.Location, "Trying to access invalid return type: " + Current.Lexeme);
+            throw new CompilerException(ExceptionSource.PARSER, Current.Location, "Invalid variable type: " + Current.Lexeme);
         }
 
         Token Peek(int howMany) {
@@ -77,7 +79,7 @@ namespace CScript {
                 return null;
             }
 
-            if (IsVariableType(Current) && Peek(1).Type == TokenType.IDENTIFIER) {
+            if ((IsVariableType(Current) || Current.Type == TokenType.TYPE_VOID) && Peek(1).Type == TokenType.IDENTIFIER) {
                 if (Peek(2).Type == TokenType.EQUAL || Peek(2).Type == TokenType.SEMICOLON) {
                     return ParseVarDeclStatement();
                 }
@@ -90,17 +92,23 @@ namespace CScript {
         }
 
         Pass0.Statement ParseFunDeclStatement() {
-            Token returnType = ConsumeVariableType();
+            if (mCurrentFunctionReturnType != null) {
+                throw new CompilerException(ExceptionSource.PARSER, Current.Location, "Can't parse nested functions");
+            }
+
+            Token returnType = Current.Type != TokenType.TYPE_VOID? ConsumeVariableType() : Consume(TokenType.TYPE_VOID);
+            mCurrentFunctionReturnType = returnType;
             Token functionName = Consume("Function name can only be an identifier", TokenType.IDENTIFIER);
             Consume("Function name must be followed by (", TokenType.LPAREN);
             List<Pass0.FunParamater> paramaters = new List<Pass0.FunParamater>();
             while(Current.Type != TokenType.RPAREN && Current.Type != TokenType.EOF) {
                 Token paramType = ConsumeVariableType();
                 Token paramName = Consume("Param name can only be an identifier", TokenType.IDENTIFIER);
-                Pass0.FunParamater param = new Pass0.FunParamater(paramType, paramName);
+                Pass0.FunParamater param = new Pass0.FunParamater(paramName, paramType);
                 if (Current.Type == TokenType.COMMA) {
                     Consume(TokenType.COMMA);
                 }
+                paramaters.Add(param);
             }
             Consume("Function argument list must be followed by )", TokenType.RPAREN);
 
@@ -110,6 +118,7 @@ namespace CScript {
                 functionBody.Add(ParseStatement());
             }
             Consume("Function body must be followed by }", TokenType.RBRACE);
+            mCurrentFunctionReturnType = null;
 
             return new Pass0.FunDeclStatement(returnType, functionName, paramaters, functionBody);
         }
@@ -121,6 +130,9 @@ namespace CScript {
             else if (Current.Type == TokenType.LBRACE) {
                 return ParseBlockStatement();
             }
+            else if (Current.Type == TokenType.RETURN) {
+                return ParseReturnStatement();
+            }
             if (IsVariableType(Current) && Peek(1).Type == TokenType.IDENTIFIER) {
                 if (Peek(2).Type == TokenType.EQUAL || Peek(2).Type == TokenType.SEMICOLON) {
                     return ParseVarDeclStatement();
@@ -129,6 +141,34 @@ namespace CScript {
             return ParseExpressionStatement();
         }
 
+
+        Pass0.Statement ParseReturnStatement() {
+            if (mCurrentFunctionReturnType == null) {
+                throw new CompilerException(ExceptionSource.PARSER, Current.Location, "Return statement can only appear inside of a function");
+            }
+
+            Token statement = Consume(TokenType.RETURN);
+            Pass0.Expression returnValue = null;
+
+            if (Current.Type != TokenType.SEMICOLON) {
+                returnValue = ParseExpression();
+            }
+
+            Consume("Return statement must be followed by a semicolon", TokenType.SEMICOLON);
+
+            if (mCurrentFunctionReturnType.Type == TokenType.TYPE_VOID) {
+                if (returnValue != null) {
+                    throw new CompilerException(ExceptionSource.PARSER, Current.Location, "Can't return a value from a void function");
+                }
+            }
+            else {
+                if (returnValue == null) {
+                    throw new CompilerException(ExceptionSource.PARSER, Current.Location, "Function must return a " + mCurrentFunctionReturnType.Type);
+                }
+            }
+
+            return new Pass0.ReturnStatement(statement, returnValue);
+        }
         Pass0.Statement ParseBlockStatement() {
             Token brace = Consume("Block statement must start with {", TokenType.LBRACE);
             List<Pass0.Statement> body = new List<Pass0.Statement>();

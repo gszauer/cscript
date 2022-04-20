@@ -1,0 +1,2 @@
+PARSER error on line: 50, in file: ../../../tests/bad/019.txt
+Error: Function must return a TYPE_INT

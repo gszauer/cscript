@@ -9,6 +9,7 @@ statement -> expressionStatement | printStatement | varDeclStatement | blockStat
 expressionStatement -> expression ";";
 printStatement -> "print" "(" expression? ")" ";";
 blockStatement -> "{" statement* "}";
+returnStatement -> "return" expression? ";";
 
 expression -> assignment;
 assignment -> IDENTIFIER "=" assignment | add_sub;
