@@ -7,6 +7,11 @@
             T VisitVariableExpression(VariableExpression expr, V misc);
             T VisitAssignmentExpression(AssignmentExpression expr, V misc);
             T VisitCallExpression(CallExpression expr, V misc);
+            T VisitTypeExpression(TypeExpression expr, V misc);
+            T VisitGetExpression(GetExpression expr, V misc);
+            T VisitSetExpression(SetExpression expr, V misc);
+            T VisitIsExpression(IsExpression expr, V misc);
+            T VisitAsExpression(AsExpression expr, V misc);
         }
         class Expression {
             public Token Token { get; protected set; }
@@ -106,6 +111,75 @@
             }
             public override T Accept<T, V>(ExpressionVisitor<T, V> visitor, V o) {
                 return visitor.VisitCallExpression(this, o);
+            }
+        }
+
+        class TypeExpression : Expression {
+            public Expression Expression { get; protected set; }
+            public bool Dynamic { get; protected set; }
+
+            public TypeExpression(Token t, Expression e, bool dyn) : base(t) {
+                Expression = e;
+                Dynamic = dyn;
+            }
+            public override T Accept<T, V>(ExpressionVisitor<T, V> visitor, V o) {
+                return visitor.VisitTypeExpression(this, o);
+            }
+        }
+
+        class GetExpression : Expression {
+            public Expression Callee { get; protected set; }
+            public Token Name { get; protected set; }
+
+            public GetExpression(Token name, Expression e) : base(name) {
+                Name = name;
+                Callee = e;
+            }
+
+            public override T Accept<T, V>(ExpressionVisitor<T, V> visitor, V o) {
+                return visitor.VisitGetExpression(this, o);
+            }
+        }
+
+        class SetExpression : Expression {
+            public Expression Callee { get; protected set;}
+            public Token Name { get; protected set; }
+            public Expression Value { get; protected set; }
+
+            public SetExpression(Expression callee, Token name, Expression value) : base(name) {
+                Callee = callee;
+                Name = name;
+                Value = value;
+            }
+            public override T Accept<T, V>(ExpressionVisitor<T, V> visitor, V o) {
+                return visitor.VisitSetExpression(this, o);
+            }
+        }
+
+        class IsExpression : Expression {
+            public Expression TestObject { get; protected set; }
+            public Token TestType { get; protected set; }
+
+            public IsExpression(Expression tObj, Token tType, Token _op) : base(_op) {
+                TestObject = tObj;
+                TestType = tType;
+            }
+
+            public override T Accept<T, V>(ExpressionVisitor<T, V> visitor, V o) {
+                return visitor.VisitIsExpression(this, o);
+            }
+        }
+
+        class AsExpression : Expression {
+            public Expression Castee { get; protected set; }
+            public Token CastTo { get; protected set; }
+            
+            public AsExpression(Expression cObj, Token cType, Token _op) : base(_op) {
+                Castee = cObj;
+                CastTo = cType;
+            }
+            public override T Accept<T, V>(ExpressionVisitor<T, V> visitor, V o) {
+                return visitor.VisitAsExpression(this, o);
             }
         }
     }

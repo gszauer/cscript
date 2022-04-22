@@ -16,7 +16,7 @@ namespace CScript {
 
         public void DeclareVariableType(string name, TypeId type, Location location) {
             if (mDeclaredTypes.ContainsKey(name)) {
-                throw new CompilerException(ExceptionSource.TYPECHECKER, location, "Trying to re-declare type: " + type.DebugName);
+                throw new CompilerException(ExceptionSource.TYPECHECKER, location, "Trying to re-declare variable: " + name);
             }
             mDeclaredTypes[name] = type;
         }

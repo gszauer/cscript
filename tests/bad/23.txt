@@ -1,0 +1,39 @@
+// type of void
+
+type seven; 
+
+type intType = type(int);
+type intType2 = type(3);
+type intType3 = type(3 + 5);
+
+void run() {
+	type intType = type(int); // Can enter data types in there
+	print(intType); print('\n');
+	
+	seven = type(void); // But NOT VOID
+	intType = type(45); // Or literals
+	print(intType); print('\n');
+	int val = 4;
+	intType = type(val); // Can deduce the type of the expression.
+	print(intType); print('\n');
+	
+	type t = type(type);
+	print(t); print('\n');
+
+	char x;
+	bool y;
+	type(x);
+	type(y);
+	seven = type(x);
+	seven = type(y);
+	print(type(run)); print('\n');
+	print(seven); print('\n');
+
+	//print ((47 is int)); print('\n');
+	//print ((47 is char)); print('\n');
+	//print ((47 is float)); print('\n');
+
+	//print ((47 as int)); print('\n');
+	//print ((47 as char)); print('\n');
+	//print ((47 as float)); print('\n');
+}

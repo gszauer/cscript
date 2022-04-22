@@ -35,6 +35,8 @@ namespace CScript {
                 t.Type == TokenType.TYPE_FLOAT ||
                 t.Type == TokenType.TYPE_CHAR ||
                 t.Type == TokenType.TYPE_BOOL ||
+                t.Type == TokenType.TYPE_TYPE ||
+                t.Type == TokenType.TYPE_OBJECT ||
                 t.Type == TokenType.IDENTIFIER;
         }
 
@@ -77,6 +79,10 @@ namespace CScript {
         Pass0.Statement ParseDeclaration() {
             if (Current.Type == TokenType.EOF) {
                 return null;
+            }
+
+            if (Current.Type == TokenType.STRUCT) {
+                return ParseStructDeclStatement();
             }
 
             if ((IsVariableType(Current) || Current.Type == TokenType.TYPE_VOID) && Peek(1).Type == TokenType.IDENTIFIER) {
@@ -141,6 +147,24 @@ namespace CScript {
             return ParseExpressionStatement();
         }
 
+        Pass0.Statement ParseStructDeclStatement() {
+            Consume(TokenType.STRUCT);
+            Token name = Consume(TokenType.IDENTIFIER);
+            Consume(TokenType.LBRACE);
+            List<Pass0.VarDeclStatement> variables = new List<Pass0.VarDeclStatement>();
+
+            while (Current.Type != TokenType.RBRACE && Current.Type != TokenType.EOF) {
+                Pass0.Statement var = ParseVarDeclStatement();
+                if (!(var is Pass0.VarDeclStatement)) {
+                    throw new NotImplementedException();
+                }
+                variables.Add((Pass0.VarDeclStatement)var);
+            }
+
+            Consume(TokenType.RBRACE);
+
+            return new Pass0.StructDeclStatement(name, variables);
+        }
 
         Pass0.Statement ParseReturnStatement() {
             if (mCurrentFunctionReturnType == null) {
@@ -213,20 +237,66 @@ namespace CScript {
         }
 
         Pass0.Expression ParseExpression() {
+            if (Current.Type == TokenType.TYPE_TYPE && Peek(1).Type == TokenType.LPAREN) {
+                return ParseTypeExpression();
+            }
             return ParseAssignment();
         }
 
+        Pass0.Expression ParseTypeExpression() {
+            Token type = Consume(TokenType.TYPE_TYPE);
+            Consume("Expected '(' after type keyword", TokenType.LPAREN);
+            bool dyn = false;
+
+            Pass0.Expression expression = null;
+            if (Current.Type != TokenType.RPAREN) {
+                if (Current.Lexeme == "dynamic") {
+                    Consume(Current.Type);
+                    dyn = true;
+                }
+                if (IsVariableType(Current) && Current.Type != TokenType.IDENTIFIER) {
+                    Token typeToke = ConsumeVariableType();
+                    Consume("Expected ')' after type arguments", TokenType.RPAREN);
+                    return new Pass0.LiteralExpression(typeToke);
+                }
+                expression = ParseExpression();
+
+                if (Current.Type == TokenType.COMMA) {
+                    throw new CompilerException(ExceptionSource.PARSER, Current.Location, "type() only takes one argument");
+                }
+            }
+            else {
+                throw new CompilerException(ExceptionSource.PARSER, Current.Location, "type() takes one argument");
+            }
+
+            Consume("Expected ')' after type arguments", TokenType.RPAREN);
+
+            return new Pass0.TypeExpression(type, expression, dyn);
+        }
+
         Pass0.Expression ParseAssignment() {
-            Pass0.Expression expr = ParseAddSub();
+            Pass0.Expression expr = ParseIsExpression();
 
             if (Current.Type == TokenType.EQUAL) {
                 Consume(TokenType.EQUAL);
 
+                Pass0.Expression value = null;
+                if (Current.Type == TokenType.TYPE_TYPE && Peek(1).Type == TokenType.LPAREN) {
+                    value = ParseTypeExpression();
+                }
+                else {
+                    value = ParseAssignment();
+                }
+
                 if (expr is Pass0.VariableExpression) {
                     Pass0.VariableExpression var = (Pass0.VariableExpression)expr;
-                    Pass0.Expression value = ParseAssignment();
 
                     return new Pass0.AssignmentExpression(var.Name, value);
+                }
+                else if (expr is Pass0.GetExpression) {
+                    Pass0.GetExpression get = (Pass0.GetExpression)expr;
+
+                    return new Pass0.SetExpression(get.Callee, get.Name, value);
                 }
                 throw new CompilerException(ExceptionSource.PARSER, expr.Location, "Assignment is only valid for variable expressions");
             }
@@ -234,6 +304,18 @@ namespace CScript {
             return expr;
         }
 
+        Pass0.Expression ParseIsExpression() {
+            Pass0.Expression left = ParseAddSub();
+
+            if (Current.Type == TokenType.IS) {
+                Token oper = Consume(TokenType.IS);
+                Token type = ConsumeVariableType();
+
+                return new Pass0.IsExpression(left, type, oper);
+            }
+
+            return left;
+        }
         Pass0.Expression ParseAddSub() {
             Pass0.Expression left = ParseMulDiv();
 
@@ -247,13 +329,25 @@ namespace CScript {
         }
 
         Pass0.Expression ParseMulDiv() {
-            Pass0.Expression left = ParseUnary();
+            Pass0.Expression left = ParseAs();
 
             while (Current.Type == TokenType.STAR || Current.Type == TokenType.SLASH) {
                 Token _operator = Current;
                 Consume(TokenType.STAR, TokenType.SLASH);
-                Pass0.Expression right = ParseUnary();
+                Pass0.Expression right = ParseAs();
                 left = new Pass0.BinaryExpression(left, _operator, right);
+            }
+
+            return left;
+        }
+
+        Pass0.Expression ParseAs() {
+            Pass0.Expression left = ParseUnary();
+
+            if (Current.Type == TokenType.AS) {
+                Token _op = Consume(TokenType.AS);
+                Token type = ConsumeVariableType();
+                left = new Pass0.AsExpression(left, type, _op);
             }
 
             return left;
@@ -273,23 +367,35 @@ namespace CScript {
         Pass0.Expression ParseCall() {
             Pass0.Expression callee = ParsePrimary();
 
-            while(Current.Type == TokenType.LPAREN) {
-                Token callSite = Consume(TokenType.LPAREN);
+            while (true) {
+                if (Current.Type == TokenType.LPAREN) {
+                    Token callSite = Consume(TokenType.LPAREN);
 
-                List<Pass0.Expression> args = new List<Pass0.Expression>();
-                while(Current.Type != TokenType.RPAREN && Current.Type != TokenType.EOF) {
-                    args.Add(ParseExpression());
-                    if (Current.Type == TokenType.COMMA) {
-                        Consume(TokenType.COMMA);
+                    List<Pass0.Expression> args = new List<Pass0.Expression>();
+                    while (Current.Type != TokenType.RPAREN && Current.Type != TokenType.EOF) {
+                        args.Add(ParseExpression());
+                        if (Current.Type == TokenType.COMMA) {
+                            Consume(TokenType.COMMA);
+                        }
                     }
-                }
 
-                if (!(callee is Pass0.VariableExpression || callee is Pass0.CallExpression)) {
-                    throw new CompilerException(ExceptionSource.PARSER, callee.Location, "Calee must be a variable or call expression");
-                }
+                    if (!(callee is Pass0.VariableExpression || callee is Pass0.CallExpression)) {
+                        throw new CompilerException(ExceptionSource.PARSER, callee.Location, "Calee must be a variable or call expression");
+                    }
 
-                callee = new Pass0.CallExpression(callee, callSite, args);
-                Consume("Call expression must end with )", TokenType.RPAREN);
+                    Consume("Call expression must end with )", TokenType.RPAREN);
+
+                    callee = new Pass0.CallExpression(callee, callSite, args);
+                }
+                else if (Current.Type == TokenType.DOT) {
+                    Consume(TokenType.DOT);
+                    Token name = Consume("Getter name must be an identifier", TokenType.IDENTIFIER);
+
+                    callee = new Pass0.GetExpression(name, callee);
+                }
+                else {
+                    break;
+                }
             }
 
             return callee;
@@ -298,8 +404,8 @@ namespace CScript {
         Pass0.Expression ParsePrimary() {
             Token current = Current;
 
-            if (current.Type == TokenType.LIT_NUMBER || current.Type == TokenType.LIT_TRUE || current.Type == TokenType.LIT_FALSE || current.Type == TokenType.LIT_CHAR) {
-                Consume(TokenType.LIT_NUMBER, TokenType.LIT_TRUE, TokenType.LIT_FALSE, TokenType.LIT_CHAR);
+            if (current.Type == TokenType.LIT_NULL || current.Type == TokenType.LIT_NUMBER || current.Type == TokenType.LIT_TRUE || current.Type == TokenType.LIT_FALSE || current.Type == TokenType.LIT_CHAR) {
+                Consume(TokenType.LIT_NUMBER, TokenType.LIT_TRUE, TokenType.LIT_FALSE, TokenType.LIT_CHAR, TokenType.LIT_NULL);
                 return new Pass0.LiteralExpression(current);
             }
             else if (current.Type == TokenType.IDENTIFIER) {

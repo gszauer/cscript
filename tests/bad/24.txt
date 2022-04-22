@@ -1,0 +1,36 @@
+// Error, globals can only be constants
+
+struct Vec3 {
+	float x;
+	float y = 0.0;
+	float z; // = char, should break in a lot of ways
+}
+
+Vec3 forward;
+
+Vec3 down = Vec3(); // Should fail
+
+void run() {
+	Vec3 a = Vec3();
+	a.x = 5.0;
+	a.x = 6.0;
+	a.x = 7.0;
+
+	print ('x'); print(':'); print (' '); print(a.x); print ('\n');
+	print(forward);print('\n'); // Forward is null
+	print(type(forward));print('\n'); // Type is object
+	forward = a;
+	print(type(forward));print('\n'); // Type is Vec3
+	print(type(Vec3));print('\n');
+	print(a);print('\n');
+}
+
+Vec3 AddVectors(Vec3 a, Vec3 b) {
+	Vec3 result = Vec3();
+
+	result.x = a.x + b.x;
+	result.y = a.y + b.y;
+	result.z = a.z + b.z;
+
+	return result;
+}

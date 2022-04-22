@@ -26,6 +26,12 @@
                 { "false", TokenType.LIT_FALSE },
                 { "return", TokenType.RETURN },
                 { "void", TokenType.TYPE_VOID },
+                { "type", TokenType.TYPE_TYPE },
+                { "struct", TokenType.STRUCT },
+                { "null", TokenType.LIT_NULL },
+                { "object", TokenType.TYPE_OBJECT },
+                { "is", TokenType.IS },
+                { "as", TokenType.AS }
             };
 
             Token next = NextToken();
@@ -82,22 +88,22 @@
             switch (c) {
                 case ' ':
                 case '\t':
-                case '\r':
-                    return new Token(TokenType.SLASH_SLASH, mLine, mFile, Lexeme);
-                case '\n':
-                    mLine++;
-                    return new Token(TokenType.SLASH_SLASH, mLine, mFile, Lexeme);
+                case '\r': return new Token(TokenType.SLASH_SLASH, mLine, mFile, Lexeme);
+                case '\n': mLine++; return new Token(TokenType.SLASH_SLASH, mLine, mFile, Lexeme);
+                case '{': return new Token(TokenType.LBRACE, mLine, mFile, Lexeme);
+                case '}': return new Token(TokenType.RBRACE, mLine, mFile, Lexeme);
                 case '(': return new Token(TokenType.LPAREN, mLine, mFile, Lexeme);
                 case ')': return new Token(TokenType.RPAREN, mLine, mFile, Lexeme);
+                case '[': return new Token(TokenType.LBRACKET, mLine, mFile, Lexeme);
+                case ']': return new Token(TokenType.RBRACKET, mLine, mFile, Lexeme);
                 case '+': return new Token(TokenType.PLUS, mLine, mFile, Lexeme);
                 case '-': return new Token(TokenType.MINUS, mLine, mFile, Lexeme);
                 case '*': return new Token(TokenType.STAR, mLine, mFile, Lexeme);
                 case ';': return new Token(TokenType.SEMICOLON, mLine, mFile, Lexeme);
                 case '=': return new Token(TokenType.EQUAL, mLine, mFile, Lexeme);
                 case '!': return new Token(TokenType.NOT, mLine, mFile, Lexeme);
-                case '{': return new Token(TokenType.LBRACE, mLine, mFile, Lexeme);
-                case '}': return new Token(TokenType.RBRACE, mLine, mFile, Lexeme);
                 case ',': return new Token(TokenType.COMMA, mLine, mFile, Lexeme);
+                case '.': return new Token(TokenType.DOT, mLine, mFile, Lexeme);
                 case '/':
                     if (n == '/') {
                         while (Current != '\n' && mCurrentChar < mSource.Length) {

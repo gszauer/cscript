@@ -1,0 +1,68 @@
+// Can't assign object to var
+
+struct Vec3 {
+	float x = 20.0;
+	float y = 0.0;
+	float z = 7.0;
+}
+
+Vec3 forward;
+Vec3 up = null; // Should work
+
+object def1 = null;
+object def2;
+object def3 = void;// Error
+
+void run() {
+	object g = AddVectors(Vec3(), Vec3()); // Any struct instance can be an object
+	g = Vec3(); // Can assign
+	object h; // Will be null by default
+	object i = null; // Can initialize to null;
+	h = i;
+	object k = h;
+
+	Vec3 a = Vec3();
+	a.x = 5.0;
+	a.x = 6.0;
+	a.x = 7.0;
+
+	g = a;
+	a.x = 1.0;
+	a.y = 0.0;
+	a.z = 0.0;
+	a = null;
+
+	// Vec3 q = g; // Error
+	//object j = object; // Compiler error
+	
+	p(g);p('\n');					// <struct vec3 1, 0, 0
+	print(type(g));p('\n');			// <type object
+	print(type(dynamic g));p('\n');	// <type Vec3
+	p(type(g));p('\n');				// <type object
+	p(type(dynamic g));p('\n');		// <type Vec3
+	p(h);p('\n');					// null
+	p(a);p('\n');					// null
+	print(type(a));p('\n');			// <type Vec3
+	p(type(dynamic a));				// <type object
+
+	Vec3 _v2;
+	Vec3 _v3 = null;
+
+	// p(Vec3); // Invalid ERROR
+	//_v2 = AddVectors(g, g); // Compiler error
+	//object ooo = p(g); // Compiler error
+}
+
+void p(object o) {
+	print(o);
+}
+
+Vec3 AddVectors(Vec3 a, Vec3 b) {
+	Vec3 result = Vec3();
+
+	result.x = a.x + b.x;
+	result.y = a.y + b.y;
+	result.z = a.z + b.z;
+
+	return result;
+}

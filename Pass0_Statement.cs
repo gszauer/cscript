@@ -6,6 +6,7 @@
             T VisitVarDeclStatement(VarDeclStatement stmt, V misc);
             T VisitExpressionStatement(ExpressionStatement stmt, V misc);
             T VisitFunDeclStatement(FunDeclStatement stmt, V misc);
+            T VisitStructDeclStatement(StructDeclStatement stmt, V misc);
             T VisitBlockStatement(BlockStatement stmt, V misc);
             T VisitReturnStatement(ReturnStatement stmt, V misc);
         }
@@ -90,6 +91,19 @@
             }
         }
 
+        class StructDeclStatement : Statement {
+            public List<VarDeclStatement> Variables { get; protected set; }
+            public Token Name;
+
+            public StructDeclStatement(Token name, List<VarDeclStatement> members) : base(name) {
+                Name=name;
+                Variables = members;
+            }
+
+            public override T Accept<T, V>(StatementVisitor<T, V> visitor, V o) {
+                return visitor.VisitStructDeclStatement(this, o);
+            }
+        }
         class BlockStatement : Statement {
             public List<Statement> Body { get; protected set; }
             public BlockStatement(Token lbrace, List<Statement> body) : base(lbrace) {

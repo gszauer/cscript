@@ -1,0 +1,2 @@
+PARSER error on line: 20, in file: ../../../tests/bad/043.txt
+Error: Invalid variable type: 7

@@ -8,6 +8,7 @@
             T VisitFunDeclStatement(FunDeclStatement stmt, V misc);
             T VisitBlockStatement(BlockStatement stmt, V misc);
             T VisitReturnStatement(ReturnStatement stmt, V misc);
+            T VisitStructDeclStatement(StructDeclStatement stmt, V misc);
         }
         class Statement {
             public Location Location { get; protected set; }
@@ -31,6 +32,8 @@
                 return visitor.VisitPrintStatement(this, o);
             }
         }
+
+        
 
         class VarDeclStatement : Statement {
             public Expression Initializer { get; protected set; }
@@ -89,6 +92,22 @@
             }
         }
 
+        class StructDeclStatement : Statement {
+            public List<VarDeclStatement> Variables { get; protected set; }
+            public string Name { get; protected set; }
+            public TypeId Type { get; protected set; }
+
+            public StructDeclStatement(Token name, TypeId type, List<VarDeclStatement> variables) : base(name.Location) {
+                Name = name.Lexeme;
+                Variables = variables;
+                Type = type;
+            }
+
+            public override T Accept<T, V>(StatementVisitor<T, V> visitor, V o) {
+                return visitor.VisitStructDeclStatement(this, o);
+            }
+        }
+
         class BlockStatement : Statement {
             public List<Statement> Body { get; protected set; }
             public BlockStatement(Location location, List<Statement> body) : base(location) {
@@ -109,5 +128,6 @@
                 return visitor.VisitReturnStatement(this, o);
             }
         }
+
     }
 }

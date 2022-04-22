@@ -129,36 +129,269 @@
             public object VisitVariableExpression(Pass1.VariableExpression expr, Environment env) {
                 return env.Get(expr.Name, expr.Location);
             }
-            public object VisitLiteralExpression(Pass1.LiteralExpression expr, Environment misc) {
-                if (expr.Type == Types.IntID) {
-                    return Int32.Parse(expr.Lexeme);
+
+            public object VisitTypeExpression(Pass1.TypeExpression expr, Environment env) {
+                object result = EvaluateExpression(expr.Expression, env);
+
+                if (expr.Dynamic) {
+                    TypeId dynamicType = GetRuntimeType(result);
+                    return dynamicType;
                 }
-                if (expr.Type == Types.FloatID) {
-                    return Double.Parse(expr.Lexeme);
+                TypeId staticType = expr.Expression.Type;
+                return staticType;
+
+                throw new InterpreterException(expr.Location, "Getting unknown type literal");
+            }
+
+            public object VisitIsExpression(Pass1.IsExpression expr, Environment env) {
+                object result = EvaluateExpression(expr.TestObject, env);
+
+                // 7 as object
+                // Vec3 as object
+                if (expr.TestType == Types.ObjectID) {
+                    return true; // EVERYTHING IS AN OBJECT
                 }
-                else if (expr.Type == Types.CharID) {
-                    if (expr.Lexeme == "'\\n'") {
-                        return '\n';
-                    }
-                    if (expr.Lexeme == "'\\t'") {
-                        return '\t';
-                    }
-                    if (expr.Lexeme == "'\\r'") {
-                        return '\r';
-                    }
-                    if (expr.Lexeme == "'\\0'") {
-                        return '\0';
-                    }
-                    if (expr.Lexeme.Length == 3) {
-                        string debug = char.Parse(expr.Lexeme.Substring(1, 1)).ToString();
-                        return char.Parse(expr.Lexeme.Substring(1, 1));
-                    }
+
+                TypeId resultType = GetRuntimeType(result);
+
+                // 7 as int
+                if (resultType == expr.TestType) {
+                    return true;
                 }
-                else if (expr.Type == Types.BoolID) {
-                    return bool.Parse(expr.Lexeme);
+
+                // obj as Vec3
+                return false;
+            }
+
+            public object VisitAsExpression(Pass1.AsExpression expr, Environment env) {
+                object result = EvaluateExpression(expr.Castee, env);
+                TypeId resultType = GetRuntimeType(result);
+
+                if (resultType == expr.Type) { // Obj a = Vec3(); Vec3 b = a as Vec3;
+                    return result;
+                }
+
+                if (expr.Type == Types.ObjectID) { // Anything can be cast to an object
+                    return result;
+                }
+
+                if (resultType == Types.ObjectID && result == null) {
+                    return GetRuntimeValue(expr.Type); // Null
+                }
+
+                if (resultType == Types.IntID || resultType == Types.FloatID || resultType == Types.CharID || resultType == Types.BoolID) { // Casting a primiitive
+                    if (expr.Type == Types.IntID || expr.Type == Types.FloatID || expr.Type == Types.CharID || expr.Type == Types.BoolID) {
+                        return Cast(result, resultType, expr.Type);
+                    }
+                    return GetRuntimeValue(expr.Type);
                 }
                 
-                throw new InterpreterException(expr.Location, "Unknown literal expression type");
+                else if (Types.IsStruct(resultType)) {
+                    // Casting to a specific struct, but the dynamic struct type didn't match
+                    // So we're casting incompatible objects. This will return null
+                    return GetRuntimeValue(expr.Type); // casting to a specific struct
+                }
+
+                throw new InterpreterException(expr.Location, "Casting from " + resultType.DebugName + " to invalid type: " + expr.Type.DebugName);
+            }
+
+            public object Cast(object target, TypeId from, TypeId to) {
+                if (from == Types.IntID) {
+                    int i = (int)target;
+                    if (to == Types.IntID) {
+                        return (int)i;
+                    }
+                    else if (to == Types.FloatID) {
+                        return (double)i;
+                    }
+                    else if (to == Types.CharID) {
+                        return (char)i;
+                    }
+                    else if (to == Types.BoolID) {
+                        if (i == 0) {
+                            return false;
+                        }
+                        return true;
+                    }
+                }
+                else if (from == Types.FloatID) {
+                    double f = (double)target;
+                    if (to == Types.IntID) {
+                        return (int)f;
+                    }
+                    else if (to == Types.FloatID) {
+                        return (double)f;
+                    }
+                    else if (to == Types.CharID) {
+                        return (char)f;
+                    }
+                    else if (to == Types.BoolID) {
+                        if (f == 0.0) {
+                            return false;
+                        }
+                        return true;
+                    }
+                }
+                else if (from == Types.CharID) {
+                    char c = (char)target;
+                    if (to == Types.IntID) {
+                        return (int)c;
+                    }
+                    else if (to == Types.FloatID) {
+                        return (double)c;
+                    }
+                    else if (to == Types.CharID) {
+                        return (char)c;
+                    }
+                    else if (to == Types.BoolID) {
+                        if (c == 0) {
+                            return false;
+                        }
+                        return true;
+                    }
+                }
+                else if (from == Types.BoolID) {
+                    bool b = (bool)target;
+
+                    if (to == Types.IntID) {
+                        if (b) {
+                            return 1;
+                        }
+                        return 0;
+                    }
+                    else if (to == Types.FloatID) {
+                        if (b) {
+                            return 1.0;
+                        }
+                        return 0.0;
+                    }
+                    else if (to == Types.CharID) {
+                        if (b) {
+                            return 't';
+                        }
+                        return '\0';
+                    }
+                    else if (to == Types.BoolID) {
+                        return b;
+                    }
+                }
+
+                throw new NotImplementedException();
+            }
+
+            public TypeId GetRuntimeType(object value) {
+                if (value == null) {
+                    return Types.ObjectID;
+                }
+                if (value is int) {
+                    return Types.IntID;
+                }
+                if (value is double) {
+                    return Types.FloatID;
+                }
+                if (value is char) {
+                    return Types.CharID;
+                }
+                if (value is bool) {
+                    return Types.BoolID;
+                }
+                if (value is StructureDeclaration) {
+                    StructureDeclaration structureDeclaration = (StructureDeclaration)value;
+                    return structureDeclaration.Type;
+                }
+                if (value is StructureInstance) {
+                    StructureInstance structureInstance = (StructureInstance)value;
+                    return structureInstance.Type;
+                }
+                throw new NotImplementedException();
+            }
+            public object GetRuntimeValue(TypeId type, string optLexeme = null) {
+                if (Types.IsStruct(type)) {
+                    if (optLexeme != null) {
+                        if (optLexeme != "null") {
+                            throw new NotImplementedException();
+                        }
+                    }
+                    return null;
+                }
+                else if (type == Types.IntID) {
+                    if (optLexeme != null) {
+                        return Int32.Parse(optLexeme);
+                    }
+                    return 0;
+                }
+                else if (type == Types.FloatID) {
+                    if (optLexeme != null) {
+                        return Double.Parse(optLexeme);
+                    }
+                    return 0.0;
+                }
+                else if (type == Types.CharID) {
+                    if (optLexeme != null) {
+                        if (optLexeme == "'\\n'") {
+                            return '\n';
+                        }
+                        if (optLexeme == "'\\t'") {
+                            return '\t';
+                        }
+                        if (optLexeme == "'\\r'") {
+                            return '\r';
+                        }
+                        if (optLexeme == "'\\0'") {
+                            return '\0';
+                        }
+                        if (optLexeme.Length == 3) {
+                            //string debug = char.Parse(optLexeme.Substring(1, 1)).ToString();
+                            return char.Parse(optLexeme.Substring(1, 1));
+                        }
+                        throw new NotImplementedException();
+                    }
+                    return '\0';
+                }
+                else if (type == Types.BoolID) {
+                    if (optLexeme != null) {
+                        return bool.Parse(optLexeme);
+                    }
+                    return false;
+                }
+                else if (type == Types.TypeID) {
+                    if (optLexeme != null) {
+                        if (optLexeme == "int") {
+                            return new TypeId(Types.IntID.Index, Types.IntID.DebugName);
+                        }
+                        if (optLexeme == "float") {
+                            return new TypeId(Types.FloatID.Index, Types.FloatID.DebugName);
+                        }
+                        if (optLexeme == "bool") {
+                            return new TypeId(Types.BoolID.Index, Types.BoolID.DebugName);
+                        }
+                        if (optLexeme == "char") {
+                            return new TypeId(Types.CharID.Index, Types.CharID.DebugName);
+                        }
+                        if (optLexeme == "type") {
+                            return new TypeId(Types.TypeID.Index, Types.TypeID.DebugName);
+                        }
+                        throw new NotImplementedException();
+                    }
+                    return new TypeId(Types.TypeID.Index, Types.TypeID.DebugName);
+                }
+                else if (type == Types.ObjectID) {
+                    if (optLexeme != null) {
+                        throw new NotImplementedException();
+                    }
+                    return null;
+                }
+                else if (type == Types.NullID) {
+                    if (optLexeme != null && optLexeme != "null") {
+                        throw new NotImplementedException();
+                    }
+                    return null;
+                }
+                throw new NotImplementedException();
+            }
+
+            public object VisitLiteralExpression(Pass1.LiteralExpression expr, Environment misc) {
+                return GetRuntimeValue(expr.Type, expr.Lexeme);
             }
 
             public object VisitCallExpression(Pass1.CallExpression expr, Environment env) {
@@ -192,12 +425,40 @@
                     return new StatementResult();
                 }
 
+                string print = null;
                 if (obj is int || obj is double || obj is bool || obj is char) {
-                    if (PrintHandler != null) {
-                        PrintHandler(obj.ToString());
+                    print = obj.ToString();
+                }
+                if (obj is TypeId) {
+                    TypeId typeId = (TypeId)obj;
+                    print = "<type " + typeId.Index + " " + typeId.DebugName + ">";
+                }
+                if (obj == null) {
+                    print = "null";
+                }
+                if (obj is StructureInstance) {
+                    StructureInstance str = (StructureInstance)obj;
+                    print = "<struct " + str.Type.Index + " " + str.Name + ": \n";
+                    for (int i = 0; i < str.VariableNames.Count; ++i) {
+                        print += "\t<" + str.VariableTypes[i].Index + " " + str.VariableTypes[i].DebugName + " " + str.VariableNames[i] + ": ";
+                        string varName = str.VariableNames[i];
+                        if (str.VariableValues[varName] == null) {
+                            print += "null";
+                        }
+                        else {
+                            print += str.VariableValues[varName].ToString();
+                        }
+                        print += ">\n";
                     }
-                    else { 
-                        Console.Write(obj.ToString());
+                    print += ">";
+                }
+
+                if (print != null) {
+                    if (PrintHandler != null) {
+                        PrintHandler(print);
+                    }
+                    else {
+                        Console.Write(print);
                     }
                     return new StatementResult();
                 }
@@ -212,6 +473,17 @@
                 return value;
             }
 
+            public StatementResult VisitStructDeclStatement(Pass1.StructDeclStatement stmt, Environment env) {
+                StructureDeclaration newStruct = new StructureDeclaration(stmt);
+                if (env != Global) {
+                    throw new InterpreterException(stmt.Location, "Can't declare struct in non global scope");
+                }
+                env.Declare(stmt.Name, stmt.Location);
+                env.Set(stmt.Name, newStruct, stmt.Location);
+
+                return new StatementResult();
+            }
+
             public StatementResult VisitFunDeclStatement(Pass1.FunDeclStatement stmt, Environment env) {
                 Function newFucntion = new UserFunction(stmt);
                 if (env != Global) {
@@ -223,6 +495,33 @@
                 return new StatementResult();
             }
 
+            public object VisitSetExpression(Pass1.SetExpression expr, Environment misc) {
+                object callee = EvaluateExpression(expr.Callee, misc);
+
+                if (!(callee is StructureInstance)) {
+                    throw new InterpreterException(expr.Location, "Trying to set a non struct");
+                }
+                StructureInstance inst = (StructureInstance)callee;
+
+                object value = EvaluateExpression(expr.Value, misc);
+                inst.VariableValues[expr.Name] = value;
+                return value;
+            }
+
+            public object VisitGetExpression(Pass1.GetExpression expr, Environment env) {
+                object callee = EvaluateExpression(expr.Callee, env);
+
+                if (!(callee is StructureInstance)) {
+                    throw new InterpreterException(expr.Location, "Get expression can only be done on structures");
+                }
+
+                StructureInstance inst = (StructureInstance)callee;
+                if (!inst.VariableNames.Contains(expr.Name)) {
+                    throw new InterpreterException(expr.Location, "Struct " + inst.Name + " does not contain " + expr.Name);
+                }
+
+                return inst.VariableValues[expr.Name];
+            }
             public StatementResult VisitBlockStatement(Pass1.BlockStatement stmt, Environment env) {
                 Environment block = new Environment(env);
                 foreach(Pass1.Statement e in stmt.Body) {
@@ -237,6 +536,8 @@
 
                 return new StatementResult();
             }
+
+
             public StatementResult VisitVarDeclStatement(Pass1.VarDeclStatement stmt, Environment misc) {
                 string variableName = stmt.Name;
                 
@@ -245,21 +546,7 @@
                     variableValue = EvaluateExpression(stmt.Initializer, misc);
                 }
                 else {
-                    if (stmt.Type == Types.IntID) {
-                        variableValue = 0;
-                    }
-                    else if (stmt.Type == Types.FloatID) {
-                        variableValue = 0.0f;
-                    }
-                    else if (stmt.Type == Types.CharID) {
-                        variableValue = '\0';
-                    }
-                    else if (stmt.Type == Types.BoolID) {
-                        variableValue = false;
-                    }
-                    else {
-                        throw new InterpreterException(stmt.Location, "Can't assign default value to type");
-                    }
+                    variableValue = GetRuntimeValue(stmt.Type);
                 }
 
                 Environment env = (Environment)misc;

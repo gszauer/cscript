@@ -1,0 +1,2 @@
+PARSER error on line: 47, in file: ../../../tests/bad/033.txt
+Error: Unexpected token: struct

@@ -1,0 +1,13 @@
+<struct 9 Vec3: 
+	<5 float x: 1>
+	<5 float y: 0>
+	<5 float z: 0>
+>
+<type 1 object>
+<type 9 Vec3>
+<type 1 object>
+<type 9 Vec3>
+null
+null
+<type 9 Vec3>
+<type 1 object>

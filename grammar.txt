@@ -1,22 +1,26 @@
 
 program -> (declaration)*;
 
-declaration = varDeclStatement | funDeclStatement;
+declaration = varDeclStatement | funDeclStatement | structDeclStatement;
 varDeclStatement -> IDENTIFIER IDENTIFIER ("=" expression)? ";";
 funDeclStatement -> IDENTIFIER IDENTIFIER "(" funParamaters? ")" blockStatement;
+structDeclStatement -> "struct" IDENTIFIER "{" varDeclStatement* "}";
 
-statement -> expressionStatement | printStatement | varDeclStatement | blockStatement;
+statement -> expressionStatement | printStatement | varDeclStatement | blockStatement | typeExpression;
 expressionStatement -> expression ";";
 printStatement -> "print" "(" expression? ")" ";";
 blockStatement -> "{" statement* "}";
 returnStatement -> "return" expression? ";";
 
-expression -> assignment;
-assignment -> IDENTIFIER "=" assignment | add_sub;
+expression -> assignment | typeExpression;
+typeExpression -> "type" "(" "dynamic"? expression ")" ";";
+assignment -> (call ".")? IDENTIFIER "=" assignment | isExpression | typeExpression;
+isExpression -> add_sub ("is" IDENTIFIER)?;
 add_sub -> mul_div (("+" | "-") mul_div)*;
-mul_divv -> unary (("*" | "/") unary)*;
+mul_div -> asExpression (("*" | "/") asExpression)*;
+asExpression -> unary ("as" IDENTIFIER)?;
 unary -> ("!" | "-") unary | call;
-call -> primary (" callArguments? ")";
+call -> primary ("(" callArguments? ")" | "." IDENTIFIER)*;
 primary -> NUMBER | IDENTIFIER | CHAR | "true" | "false" | "(" expression ")";
 
 funParamaters -> IDENTIFIER IDENTIFIER ("," IDENTIFIER IDENTIFIER )*;

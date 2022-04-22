@@ -1,0 +1,84 @@
+struct Vec3 {
+	float x;
+	float y;
+	float z;
+}
+
+struct Vec2 {
+	float x;
+	float y;
+}
+
+void run() {
+	Vec3 a = newVec3(1.0, 2.0, 3.0);
+	object b = a;
+	Vec3 c = b as Vec3;
+
+	PrintBool((b is Vec3), true);
+	PrintVec(a, 1.0, 2.0, 3.0);
+	// PrintVec(b, 1.0, 2.0, 3.0); // Compiler error
+	// object failer = PrintNull as object; // Compier error
+	// object failer = a as 7; // Compier error
+	PrintVec(c, 1.0, 2.0, 3.0);
+	
+	c.x = 4.0;
+	PrintVec(a, 4.0, 2.0, 3.0);
+	PrintVec(c, 4.0, 2.0, 3.0);
+
+	Vec2 d = a as Vec2;
+	PrintNull(d);
+	d = b as Vec2;
+	PrintNull(d);
+
+	object e = a as object;
+	PrintVec(e, 4.0, 2.0, 3.0);
+
+	int i = a as int;
+	print(i);print(' ');print('/');print(' ');print(0);print('\n');
+
+	i = 2;
+	bool bb = i as bool;
+	PrintBool(bb, true);
+}
+
+void PrintNull(object o) {
+	print (o);print(' ');print('/');print(' ');
+	print(null);print('\n');
+}
+
+void PrintBool(bool b, bool e) {
+	print(b);print(' ');print('/');print(' ');print(e);
+	print('\n');
+}
+
+void PrintVec(object _v, object _x, float y, float z) {
+	Vec3 v = _v as Vec3;
+	float x = _x as float;
+
+	print('(');
+	print(v.x);print(' ');
+	print (','); print(' ');
+	print(v.y);print(' ');
+	print (','); print(' ');
+	print(v.z);print(' ');
+	print(')');
+	print (' ');
+	print ('/');
+	print(' ');
+	print('(');
+	print(x);print(' ');
+	print (','); print(' ');
+	print(y);print(' ');
+	print (','); print(' ');
+	print(z);print(' ');
+	print(')');
+	print('\n');
+}
+
+Vec3 newVec3(float x, float y, float z) {
+	Vec3 v = Vec3();
+	v.x = x;
+	v.y = y;
+	v.z = z;
+	return v;
+}

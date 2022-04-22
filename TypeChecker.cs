@@ -22,32 +22,39 @@ namespace CScript {
 
             TypeEnvironment env = new TypeEnvironment(null);
             Location loc = new Location(-1, "generated - type location");
-            foreach(string type in typeTable.DeclaredTypes) {
+            
+            List<string> predeclaredTypes = typeTable.GetBuiltInTypeNames();
+            foreach (string type in predeclaredTypes) {
                 env.DeclareVariableType(type, typeTable.GetTypeId(type, loc), loc);
             }
-            // Pre-declare functions
-            foreach(KeyValuePair<string, CallableDeclaration> funDecl in typeTable.Functions) {
-                env.DeclareVariableType(funDecl.Key, typeTable.FunctionID, funDecl.Value.Location);
+
+            List<string> predeclaredFunctions = typeTable.GetFunctionNames();
+            foreach (string type in predeclaredFunctions) {
+                env.DeclareVariableType(type, typeTable.FunctionID, loc);
             }
+
+            List<string> predeclaredStructures = typeTable.GetStructureNames();
+            foreach (string type in predeclaredStructures) {
+                env.DeclareVariableType(type, typeTable.StructID, loc);
+            }
+
             mDeclaringGlobals = true;
-            // Pre-declare variables
+            // Type check struct initializers
+            foreach (Pass0.Statement s in program) {
+                if (s is Pass0.StructDeclStatement) {
+                    Program.Add(ResolveStatement(s, env));
+                }
+            }
+            // Pre-declare global variables
             foreach (Pass0.Statement s in program) {
                 if (s is Pass0.VarDeclStatement) {
-                    Pass0.VarDeclStatement varDecl = (Pass0.VarDeclStatement)s;
-                    TypeId varType = typeTable.GetTypeId(varDecl.Type.Lexeme, varDecl.Type.Location);
-                    if (varDecl.Initializer != null) {
-                        Pass1.Expression initializer = ResolveExpression(varDecl.Initializer, env);
-                        if (initializer.Type != varType) {
-                            throw new CompilerException(ExceptionSource.TYPECHECKER, varDecl.Location, "Can't initialize: " + varDecl.Name.Lexeme + " to type: " + initializer.Type.DebugName + ", it's declared as: " + varDecl.Type.Lexeme);
-                        }
-                    }
                     Program.Add(ResolveStatement(s, env));
                 }
             }
             mDeclaringGlobals = false;
 
             foreach (Pass0.Statement s in program) {
-                if (!(s is Pass0.VarDeclStatement)) {
+                if (!(s is Pass0.VarDeclStatement || s is Pass0.StructDeclStatement)) { // These have already been processed / added
                     Program.Add(ResolveStatement(s, env));
                 }
             }
@@ -116,7 +123,10 @@ namespace CScript {
         }
         public Pass1.Expression VisitLiteralExpression(Pass0.LiteralExpression expr, TypeEnvironment misc) {
             TypeId resultType = null;
-            if (expr.Type == TokenType.LIT_CHAR) {
+            if (expr.Type == TokenType.TYPE_VOID) {
+                throw new CompilerException(ExceptionSource.TYPECHECKER, expr.Location, "Void is an invalid literal type");
+            }
+            else if (expr.Type == TokenType.LIT_CHAR) {
                 resultType = mTypeTable.CharID;
             }
             else if (expr.Type == TokenType.LIT_FALSE || expr.Type == TokenType.LIT_TRUE) {
@@ -130,8 +140,16 @@ namespace CScript {
                     resultType = mTypeTable.IntID;
                 }
             }
+            else if (expr.Type == TokenType.LIT_NULL) {
+                resultType = mTypeTable.NullID;
+            }
+            else if (expr.Type == TokenType.TYPE_TYPE || expr.Type == TokenType.TYPE_CHAR ||
+                expr.Type == TokenType.TYPE_BOOL || expr.Type == TokenType.TYPE_FLOAT ||
+                expr.Type == TokenType.TYPE_INT) {
+                resultType = mTypeTable.TypeID;
+            }
             else {
-                throw new CompilerException(ExceptionSource.TYPECHECKER, expr.Location, "Unknown literal type");
+                throw new CompilerException(ExceptionSource.TYPECHECKER, expr.Location, "Unknown literal type: " + expr.Type);
             }
 
             return new Pass1.LiteralExpression(expr.Token, resultType);
@@ -158,6 +176,7 @@ namespace CScript {
 
             // Look up function based on argument types
             if (!mTypeTable.IsCallable(calee.Type)) {
+                bool debug = mTypeTable.IsCallable(calee.Type);
                 throw new CompilerException(ExceptionSource.TYPECHECKER, calee.Location, "Calling function on non callable type: " + calee.Type.DebugName);
             }
 
@@ -168,27 +187,84 @@ namespace CScript {
             }
 
             for (int i = 0; i < args.Count; ++i) {
-                if (callable.ArgumentTypes[i] != args[i].Type) {
+                if (!mTypeTable.CanAssign(callable.ArgumentTypes[i], args[i].Type)) {
+                    bool debug = mTypeTable.CanAssign(callable.ArgumentTypes[i], args[i].Type);
                     throw new CompilerException(ExceptionSource.TYPECHECKER, calee.Location, "Calling " + varExpr.Name + " with argument (" + (i + 1) + ") '" + callable.ArgumentNames[i] + "' being the wrong type, expected: " + callable.ArgumentTypes[i].DebugName + ", got: " + args[i].Type.DebugName);
                 }
             }
 
             return new Pass1.CallExpression(calee, args, callable.ReturnType, expr.Location);
         }
+        public Pass1.Expression VisitGetExpression(Pass0.GetExpression expr, TypeEnvironment env) {
+            Pass1.Expression target = ResolveExpression(expr.Callee, env);
+            if (!mTypeTable.IsStruct(target.Type)) {
+                throw new CompilerException(ExceptionSource.TYPECHECKER, expr.Location, "Get expression can only be done on a struct, not a " + target.Type.DebugName);
+            }
 
-        bool CanAssign(TypeId leftType, TypeId rightType) {
-            return leftType == rightType;
+            StructDeclaration structDecl = mTypeTable.GetStruct(target.Type, expr.Location);
+
+            if (!structDecl.VariableNames.Contains(expr.Name.Lexeme)) {
+                throw new CompilerException(ExceptionSource.TYPECHECKER, expr.Location, "Trying to get a non member: " + expr.Name.Lexeme + " on struct: " + structDecl.Name);
+            }
+
+            int varIndex = structDecl.VariableNames.IndexOf(expr.Name.Lexeme);
+            TypeId varType = structDecl.VariableTypes[varIndex];
+
+            return new Pass1.GetExpression(expr.Name, varType, target);
+        }
+        public Pass1.Expression VisitSetExpression(Pass0.SetExpression expr, TypeEnvironment env) {
+            Pass1.Expression target = ResolveExpression(expr.Callee, env);
+            if (!mTypeTable.IsStruct(target.Type)) {
+                throw new CompilerException(ExceptionSource.TYPECHECKER, expr.Location, "Set expression can only be done on a struct, not a " + target.Type.DebugName);
+            }
+
+            StructDeclaration structDecl = mTypeTable.GetStruct(target.Type, expr.Location);
+
+            if (!structDecl.VariableNames.Contains(expr.Name.Lexeme)) {
+                throw new CompilerException(ExceptionSource.TYPECHECKER, expr.Location, "Trying to set a non member: " + expr.Name.Lexeme + " on struct: " + structDecl.Name);
+            }
+
+            Pass1.Expression value = ResolveExpression(expr.Value, env);
+            if (!mTypeTable.CanAssign(structDecl.VariableTypes[structDecl.VariableNames.IndexOf(expr.Name.Lexeme)], value.Type)) {
+                throw new CompilerException(ExceptionSource.TYPECHECKER, expr.Name.Location, "Trying to set " + expr.Name.Lexeme + " to " + value.Type.DebugName + " when it's declared as: " + structDecl.VariableTypes[structDecl.VariableNames.IndexOf(expr.Name.Lexeme)].DebugName);
+            }
+
+            return new Pass1.SetExpression(expr.Name, value.Type, target, value);
         }
         public Pass1.Expression VisitAssignmentExpression(Pass0.AssignmentExpression expr, TypeEnvironment env) {
 
             TypeId variableType = env.GetVariableType(expr.Name.Lexeme, expr.Name.Location);
             Pass1.Expression variableValue = ResolveExpression(expr.Value, env);
 
-            if (!CanAssign(variableType, variableValue.Type)) {
+            if (!mTypeTable.CanAssign(variableType, variableValue.Type)) {
                 throw new CompilerException(ExceptionSource.TYPECHECKER, expr.Name.Location, "Trying to assign " + expr.Name.Lexeme + " to " + variableValue.Type.DebugName + " when it's declared as: " + variableType.DebugName);
             }
 
             return new Pass1.AssignmentExpression(expr.Name, variableValue, variableType);
+        }
+
+        public Pass1.Expression VisitTypeExpression(Pass0.TypeExpression expr, TypeEnvironment env) {
+            Pass1.Expression result = ResolveExpression(expr.Expression, env);
+            // TODO: Check?
+            return new Pass1.TypeExpression(expr.Location, mTypeTable.TypeID, result, expr.Dynamic);
+        }
+
+        public Pass1.Expression VisitIsExpression(Pass0.IsExpression expr, TypeEnvironment env) {
+            Pass1.Expression testObj = ResolveExpression(expr.TestObject, env);
+            TypeId testType = mTypeTable.GetTypeId(expr.TestType.Lexeme, expr.TestType.Location);
+
+            return new Pass1.IsExpression(testObj, testType, mTypeTable.BoolID);
+        }
+
+        public Pass1.Expression VisitAsExpression(Pass0.AsExpression expr, TypeEnvironment env) {
+            TypeId targetType = mTypeTable.GetTypeId(expr.CastTo.Lexeme, expr.CastTo.Location);
+            Pass1.Expression castee = ResolveExpression(expr.Castee, env);
+
+            if (castee.Type == mTypeTable.FunctionID) {
+                throw new CompilerException(ExceptionSource.TYPECHECKER, expr.Location, "Can't cast function");
+            }
+
+            return new Pass1.AsExpression(castee, targetType);
         }
 
         public Pass1.Statement VisitFunDeclStatement(Pass0.FunDeclStatement expr, TypeEnvironment misc) {
@@ -232,6 +308,24 @@ namespace CScript {
             return new Pass1.BlockStatement(expr.Location, body);
         }
 
+        public Pass1.Statement VisitStructDeclStatement(Pass0.StructDeclStatement stmt, TypeEnvironment misc) {
+            if (misc.mParent != null) {
+                throw new CompilerException(ExceptionSource.TYPECHECKER, stmt.Location, "Struct can only be declared at the top level: " + stmt.Name.Lexeme);
+            }
+            TypeId structType = mTypeTable.GetTypeId(stmt.Name.Lexeme, stmt.Name.Location);
+            List<Pass1.VarDeclStatement> structVars = new List<Pass1.VarDeclStatement>();
+            TypeEnvironment structEnv = new TypeEnvironment(misc);
+            foreach (Pass0.VarDeclStatement var in stmt.Variables) {
+                Pass1.Statement decl = ResolveStatement(var, structEnv);
+                if (!(decl is Pass1.VarDeclStatement)) {
+                    throw new CompilerException(ExceptionSource.TYPECHECKER, stmt.Location, "Invalid statement in struct: " + stmt.Name.Lexeme);
+                }
+                structVars.Add((Pass1.VarDeclStatement)decl);
+            }
+
+            return new Pass1.StructDeclStatement(stmt.Name, structType, structVars);
+        }
+
         public Pass1.Statement VisitVarDeclStatement(Pass0.VarDeclStatement stmt, TypeEnvironment misc) {
             TypeId variableType = mTypeTable.GetTypeId(stmt.Type.Lexeme, stmt.Type.Location);
             if (variableType == mTypeTable.VoidID) {
@@ -241,7 +335,8 @@ namespace CScript {
             Pass1.Expression initializer = null;
             if (stmt.Initializer != null) {
                 initializer = ResolveExpression(stmt.Initializer, misc);
-                if (!CanAssign(initializer.Type, variableType)) {
+                if (!mTypeTable.CanAssign(variableType, initializer.Type)) {
+                    bool debug = mTypeTable.CanAssign(variableType, initializer.Type);
                     throw new CompilerException(ExceptionSource.TYPECHECKER, stmt.Name.Location, "Trying to initialize " + stmt.Name.Lexeme + " to " + initializer.Type.DebugName + " when it's declared as: " + variableType.DebugName);
                 }
             }

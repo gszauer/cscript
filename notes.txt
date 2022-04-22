@@ -163,40 +163,154 @@ A type expression. That comes from "type" "(" expression ")" being found anywher
 This is the only way to get a valid type back. This is where the hybrid comes in. type is now a built-in 
 type just like int. and type() is the only way to create a literal of it. Oh boy....
 
-// FIRST, Let's get type going
+I'm probably going to break this one up into 3 seperate episodes
+* Part 1, get the type keyword working
+* Part 2, get structs working
+* Part 3, get objects, null, is and as working
 
-type seven; // Like an int, a type should never be null. We will have it default to $invalid
+First we try to parse just the type info with:
+
+type seven;
+
+type intType = type(int);
+type intType2 = type(3);
+type intType3 = type(3 + 5);
 
 void run() {
 	type intType = type(int); // Can enter data types in there
-	//type(void); // But NOT VOID
+	print(intType); print('\n');
+	
 	intType = type(45); // Or literals
+	print(intType); print('\n');
 	int val = 4;
 	intType = type(val); // Can deduce the type of the expression.
+	print(intType); print('\n');
+	
+	type t = type(type);
+	print(t); print('\n');
 
-	print ("47 is an integer: " + (47 is int));
-	print ("47 is an char: " + (47 is char));
-	print ("47 is a float: " + (47 is float));
-
-	print ("47 as an integer: " + (47 as int));
-	print ("47 as an char: " + (47 as char));
-	print ("47 as a float: " + (47 as float));
+	char x;
+	bool y;
+	type(x);
+	type(y);
+	seven = type(x);
+	seven = type(y);
+	print(type(run)); print('\n');
+	print(seven); print('\n'); print('\n');
 }
 
-// THEN objects
+Then objects. Implementing objects is a multi-step job and take a lot of care / work
+Step 1: Implement the struct primitive. This includes the keyword, parsing and type checking it.
+Step 2: Implement get expressions for structs
+Step 3: Implement set expressions for structs
+Step 4: Make sure the struct is callable to make new ones
+Step 5: Make sure struct works with type system
 
-struct Vec3() {
-	int x = 0; // Valid
-	int y; // Valid
-	int z; // = GetZero(); // ERROR
+The goal of implementing structs is to run this code:
+
+struct Vec3 {
+	float x;
+	float y = 0.0;
+	float z; // = char, should break in a lot of ways
 }
 
-// THEN type erasure
+Vec3 forward;
 
-// And finally strings
+void run() {
+	Vec3 a = Vec3();
+	a.x = 5.0;
+	a.x = 6.0;
+	a.x = 7.0;
 
--- EP 7
-Arrays
+	print ('x'); print(':'); print (' '); print(a.x); print ('\n');
+	print(forward);print('\n'); // Forward is null
+	print(type(forward));print('\n'); // Type is object
+	forward = a;
+	print(type(forward));print('\n'); // Type is Vec3
+	print(type(Vec3));print('\n');
+	print(a);print('\n');
+}
+
+Vec3 AddVectors(Vec3 a, Vec3 b) {
+	Vec3 result = Vec3();
+
+	result.x = a.x + b.x;
+	result.y = a.y + b.y;
+	result.z = a.z + b.z;
+
+	return result;
+}
+
+Next, make null and object work. Interestingly enough, adding support for type erasure ran me into a problem.
+For example: object o = Vec3(); Then: type(o); would always return <object> not <Vec3>, since the type of o
+is object, but the value of o is Vec3. Because of this, we have to fake one of our future features, dynamic functions.
+The idea is that type(dynamic o); will resolve the type of o dynamically. So it will return Vec3. This also means
+that a value of null will be object. So Vec3 v = null; then type(v); would be <objecT>, not <Vec3>, since the type
+of null is object
+
+struct Vec3 {
+	float x = 20.0;
+	float y = 0.0;
+	float z = 7.0;
+}
+
+Vec3 forward;
+Vec3 up = null; // Should work
+
+object def1 = null;
+object def2;
+
+void run() {
+	object g = AddVectors(Vec3(), Vec3()); // Any struct instance can be an object
+	g = Vec3(); // Can assign
+	object h; // Will be null by default
+	object i = null; // Can initialize to null;
+	h = i;
+	object k = h;
+
+	Vec3 a = Vec3();
+	a.x = 5.0;
+	a.x = 6.0;
+	a.x = 7.0;
+
+	g = a;
+	a.x = 1.0;
+	a.y = 0.0;
+	a.z = 0.0;
+	a = null;
+
+	p(g);p('\n');					// <struct vec3 1, 0, 0
+	print(type(g));p('\n');			// <type object
+	print(type(dynamic g));p('\n');	// <type Vec3
+	p(type(g));p('\n');				// <type object
+	p(type(dynamic g));p('\n');		// <type Vec3
+	p(h);p('\n');					// null
+	p(a);p('\n');					// null
+	print(type(a));p('\n');			// <type Vec3
+	p(type(dynamic a));				// <type object
+
+	Vec3 _v2;
+	Vec3 _v3 = null;
+}
+
+void p(object o) {
+	print(o);
+}
+
+Vec3 AddVectors(Vec3 a, Vec3 b) {
+	Vec3 result = Vec3();
+
+	result.x = a.x + b.x;
+	result.y = a.y + b.y;
+	result.z = a.z + b.z;
+
+	return result;
+}
+
+NOW Make sure type erasure works and things can be set to null. We want to also make sure that 'as' and 'is' work. 
+
+-- EP 7 
+Strings & Arrays
 
 -- EP 9
 Enumerations

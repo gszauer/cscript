@@ -1,0 +1,7 @@
+<type 4 int>
+<type 4 int>
+<type 4 int>
+<type 0 type>
+<type 9 $function>
+<type 7 bool>
+
