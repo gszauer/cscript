@@ -55,10 +55,18 @@
             // Variable or Function
             ParseTree.Type type = ParseType(state);
             Token name = Consume(state, Symbol.IDENTIFIER, Symbol.TYPE_STRING);
+            bool allowStruct = false;
             if(name.Symbol != Symbol.IDENTIFIER) {
                 name.Symbol = Symbol.IDENTIFIER;
             }
-            state.Types.ValidateNewTypeName(name);
+            else {
+                string lex = name.Lexeme;
+                if (lex == "vec3") {
+                    allowStruct = true;
+                }
+            }
+
+            state.Types.ValidateNewTypeName(name, allowStruct);
 
             if (Check(state, Symbol.SEMICOLON, Symbol.EQUAL)) {
                 return ParseVariableDeclaration(state, type, name);

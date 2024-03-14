@@ -15,7 +15,7 @@ public partial class Program {
 
 #if DEBUG
         if (testFilesPath == null) {
-            testFilesPath = "C:\\Users\\Gabor\\Desktop\\CScript\\tests";
+            testFilesPath = "C:\\Users\\micro\\git\\cscript\\tests";
         }
 #endif
 

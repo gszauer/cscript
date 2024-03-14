@@ -212,7 +212,8 @@ namespace CScript {
             if (s.Initializer != null) {
                 string objectType = s.Type.GetPath();
                 string valueType = ExpressionTypes[s.Initializer];
-                if (!Types.CanAssign(objectType, valueType)) { 
+                if (!Types.CanAssign(objectType, valueType)) {
+                    Types.CanAssign(objectType, valueType);
                     Compiler.Error("Type Checker", "Variable statement is declared as " + objectType + " but initializer type is " + valueType, s.Name.Location);
                     return null;
                 }
@@ -253,7 +254,7 @@ namespace CScript {
                     }
                     string return_ = ExpressionTypes[s.Value];
                     if (!Types.CanAssign(_return, return_)) { 
-                        Compiler.Error("Type Checker", "function returns " + _return + " but return expression is " + return_, s.Keyword.Location);
+                        Compiler.Error("Type Checker", "function '" + CurrentFunction.Name.Lexeme + "' returns " + _return + " but return expression is " + return_, s.Keyword.Location);
                         return null;
                     }
                 }
@@ -528,7 +529,27 @@ namespace CScript {
                             }
                         }
                     }
+                    else if (rightType == "vec3") {
+                        ExpressionTypes.Add(e, "string");
+                        return e;
+                    }
                     Compiler.Error("Type Checker", "Invalid string concat between: " + leftType + " and " + rightType, e.Operator.Location);
+                }
+                else if (leftType == "vec3" && rightType == "vec3") {
+                    ExpressionTypes.Add(e, "vec3");
+                    return e;
+                }
+            }
+            else if (e.Operator.Symbol == Symbol.MINUS) {
+                if (leftType == "vec3" && rightType == "vec3") {
+                    ExpressionTypes.Add(e, "vec3");
+                    return e;
+                }
+            }
+            else if (e.Operator.Symbol == Symbol.STAR) {
+                if (leftType == "vec3" && rightType == "num") {
+                    ExpressionTypes.Add(e, "vec3");
+                    return e;
                 }
             }
             else if (e.Operator.Symbol == Symbol.NOT_EQUAL || e.Operator.Symbol == Symbol.EQUAL_EQUAL) {
@@ -539,9 +560,17 @@ namespace CScript {
                 ExpressionTypes.Add(e, "bool");
                 return e;
             }
-
-            if (leftType == "num" && rightType == "num") {
-                ExpressionTypes.Add(e, "num");
+           
+            if (leftType == rightType) {
+                if (leftType == "num" && (e.Operator.Symbol == Symbol.LESS || e.Operator.Symbol == Symbol.GREATER ||
+                    e.Operator.Symbol == Symbol.LESS_EQUAL || e.Operator.Symbol == Symbol.GREATER_EQUAL ||
+                    e.Operator.Symbol == Symbol.EQUAL_EQUAL || e.Operator.Symbol == Symbol.NOT_EQUAL ||
+                    e.Operator.Symbol == Symbol.TILDE_EQUAL)) {
+                    ExpressionTypes.Add(e, "bool");
+                }
+                else {
+                    ExpressionTypes.Add(e, leftType);
+                }
                 return e;
             }
 
@@ -607,7 +636,6 @@ namespace CScript {
             }
             ParseTree.Declaration.Delegate del = Types.Delegates[objectType];
             string patchedUpReturnType = del.Return.GetPath();
-
 
             string mapFunctionName = e.MapFunctionName;
             string arrayFunctionName = e.ArrayFunctionName;

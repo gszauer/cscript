@@ -170,13 +170,13 @@ namespace CScript {
                     if (!Delegate.ContainsKey(delegateName)) {
                         Delegate.Add(delegateName, new Delegate(
                             _return.MakeCopy(),
-                            new Token(Symbol.IDENTIFIER, name.Location, GetDelegateName()),
+                            new Token(Symbol.IDENTIFIER, name.Location, delegateName),
                             CopyParamaters()
                         ));
                     }
                 }
                 public string GetDelegateName() {
-                    string result = "$delegate(";
+                    string result = "$delegate<" + Return.GetPath() + ">(";
                     for (int i = 0, size = Paramaters.Count; i < size; ++i) {
                         result += Paramaters[i].Type.GetPath();
                         if (i < size - 1) {

@@ -529,6 +529,10 @@ namespace CScript {
                     }
                 }
 
+                if (t.Return.GetPath() != v.Return.GetPath()) {
+                    return false;
+                }
+
                 return true;
             }
 
@@ -540,6 +544,10 @@ namespace CScript {
 
         public ParseTree.Declaration.Struct GetStruct(string type) {
             return Structs[type];
+        }
+
+        public ParseTree.Declaration.Function GetFunction(string type) {
+            return Functions[type];
         }
 
         public ParseTree.Type.Map GetMap(string type) {
@@ -590,12 +598,14 @@ namespace CScript {
             }
             return false;
         }
-        public void ValidateNewTypeName(Token name) {
+        public void ValidateNewTypeName(Token name, bool allowStruct = false) {
             string type = name.Lexeme;
             string error = null;
 
             if (Structs.ContainsKey(type)) {
-                error = "Type '" + type + "' is already defined as a struct in file: " + Structs[type].Name.Location.File;
+                if (!allowStruct) {
+                    error = "Type '" + type + "' is already defined as a struct in file: " + Structs[type].Name.Location.File;
+                }
             }
             else if (Enums.ContainsKey(type)) {
                 error = "Type '" + type + "' is already defined as an enum in file: " + Enums[type].Name.Location.File;

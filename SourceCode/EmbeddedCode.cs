@@ -171,6 +171,28 @@ struct vec3 {
     num z = 0.0;
 }
 
+struct _vec3 {
+    num epsilon = 0.0001;
+    _vec3_bin           add         = _vec3_add;
+    _vec3_bin           sub         = _vec3_sub;
+    _vec3_bin           mul         = _vec3_mul;
+    _vec3_bin           div         = _vec3_div;
+    _vec3_flt           scale       = _vec3_scale;
+    _vec3_bin_num       dot         = _vec3_dot;
+    _vec3_num           len         = _vec3_len;
+    _vec3_num           lenSq       = _vec3_lenSq;
+    _vec3_vec3          normalized  = _vec3_normalized;
+    _vec3_bin_num       angle       = _vec3_angle;
+    _vec3_bin           project     = _vec3_project;
+    _vec3_bin           reject      = _vec3_reject;
+    _vec3_bin           reflect     = _vec3_reflect;
+    _vec3_bin           cross       = _vec3_cross;
+    _vec3_interpolate   lerp        = _vec3_lerp;
+    _vec3_interpolate   slerp       = _vec3_slerp;
+    _vec3_interpolate   nlerp       = _vec3_nlerp;
+    _vec3_bin_bool      compare     = _vec3_compare;
+}
+
 vec3 _vec3_add(vec3 left, vec3 right) {
     return new vec3(
         left.x + right.x, 
@@ -212,11 +234,11 @@ vec3 _vec3_scale(vec3 left, num right) {
 }
 
 num _vec3_dot(vec3 left, vec3 right) {
-    reutrn left.x * right.x + left.y * right.y + left.z * right.z;
+    return left.x * right.x + left.y * right.y + left.z * right.z;
 }
 
 num _vec3_lenSq(vec3 v) {
-    reutrn v.x * v.x + v.y * v.y + v.z * v.z;
+    return v.x * v.x + v.y * v.y + v.z * v.z;
 }
 
 num _vec3_len(vec3 v) {
@@ -237,41 +259,102 @@ vec3 _vec3_normalized(vec3 v) {
     return new vec3(v.x * invLen, v.y * invLen, v.z * invLen);
 }
 
+num _vec3_angle(vec3 l, vec3 r) {
+	num sqMagL = l.x * l.x + l.y * l.y + l.z * l.z;
+	num sqMagR = r.x * r.x + r.y * r.y + r.z * r.z;
+
+	if (sqMagL < vec3.epsilon or sqMagR < vec3.epsilon) {
+		return 0.0;
+	}
+
+	num dot = l.x * r.x + l.y * r.y + l.z * r.z;
+	num len = math.sqrt(sqMagL) * math.sqrt(sqMagR);
+	return math.acos(dot / len);
+}
+
+vec3 _vec3_project(vec3 a, vec3 b) {
+	num magBSq = _vec3_len(b);
+	if (magBSq < vec3.epsilon) {
+		return new vec3();
+	}
+	num scale = _vec3_dot(a, b) / magBSq;
+	return b * scale;
+}
+
+vec3 _vec3_reject(vec3 a, vec3 b) {
+	vec3 projection = _vec3_project(a, b);
+	return a - projection;
+}
+
+vec3 _vec3_reflect(vec3 a, vec3 b) {
+	num magBSq = _vec3_len(b);
+	if (magBSq < vec3.epsilon) {
+		return new vec3();
+	}
+	num scale = _vec3_dot(a, b) / magBSq;
+	vec3 proj2 = b * (scale * 2);
+	return a - proj2;
+}
+
+vec3 _vec3_cross(vec3 l, vec3 r) {
+	return new vec3(
+		l.y * r.z - l.z * r.y,
+		l.z * r.x - l.x * r.z,
+		l.x * r.y - l.y * r.x
+	);
+}
+
+vec3 _vec3_lerp(vec3 s, vec3 e, num t) {
+	return new vec3(
+		s.x + (e.x - s.x) * t,
+		s.y + (e.y - s.y) * t,
+		s.z + (e.z - s.z) * t
+	);
+}
+
+vec3 _vec3_slerp(vec3 s, vec3 e, num t) {
+	if (t < 0.01) {
+		return _vec3_lerp(s, e, t);
+	}
+
+	vec3 from = _vec3_normalized(s);
+	vec3 to = _vec3_normalized(e);
+
+	num theta = _vec3_angle(from, to);
+	num sin_theta = math.sin(theta);
+
+	num a = math.sin((1.0 - t) * theta) / sin_theta;
+	num b = math.sin(t * theta) / sin_theta;
+
+	return from * a + to * b;
+}
+
+vec3 _vec3_nlerp(vec3 s, vec3 e, num t) {
+	vec3 linear = new vec3(
+		s.x + (e.x - s.x) * t,
+		s.y + (e.y - s.y) * t,
+		s.z + (e.z - s.z) * t
+	);
+	return _vec3_normalized(linear);
+}
+
+bool _vec3_compare(vec3 l, vec3 r) {
+    num dx = l.x - r.x;
+    num dy = l.y - r.y;
+    num dz = l.z - r.z;
+    num lenSq = dx * dx + dy * dy + dz * dz;
+	return lenSq < vec3.epsilon;
+}
 
 delegate vec3 _vec3_flt(vec3 left, num right);
 delegate num _vec3_num(vec3 vec);
 delegate vec3 _vec3_bin(vec3 left, vec3 right);
-delegate vec3 _vec3_bin_num(vec3 left, vec3 right, num t);
-delegate vec3  _vec3_vec3(vec3 vec);
+delegate vec3 _vec3_interpolate(vec3 left, vec3 right, num t);
 delegate num  _vec3_bin_num(vec3 left, vec3 right);
+delegate vec3  _vec3_vec3(vec3 vec);
 delegate bool  _vec3_bin_bool(vec3 left, vec3 right);
 
-struct _vec3 {
-    num epsilon = 0.0001;
-    _vec3_bin add = _vec3_add;
-    _vec3_bin sub = _vec3_sub;
-    _vec3_bin mul = _vec3_mul;
-    _vec3_bin div = _vec3_div;
-    _vec3_flt scale = _vec3_scale;
-    _vec3_bin_num dot = _vec3_dot;
-    _vec3_num len = _vec3_len;
-    _vec3_num lenSq = _vec3_lenSq;
-    _vec3_vec3 normalized = _vec3_normalized;
-    _vec3_bin_num angle
-    _vec3_bin project
-    _vec3_bin reject
-    _vec3_bin reflect
-    _vec3_bin cross
-    _vec3_bin_num lerp
-    _vec3_bin_num slerp
-    _vec3_bin_num nlerp
-    _vec3_bin_bool compare 
-}
-
 _vec3 vec3 = new _vec3();
-
-
-
 """;
         public static string InternalCode {
             get {
@@ -279,7 +362,8 @@ _vec3 vec3 = new _vec3();
                     ArrayAPI + "\n" +
                     MapAPI + "\n" +
                     StringAPI + "\n" +
-                    MathAPI;
+                    MathAPI + "\n" +
+                    VectorAPI;
             }
         }
 

@@ -7,6 +7,26 @@ namespace CScript {
         protected Dictionary<ParseTree.Expression, string> ExpressionTypes = null;
         protected int Indent = 0;
         public string Result { get { return js; } }
+        protected static List<string> Vec3Functions = new List<string>() {
+            "_vec3_add",
+            "_vec3_sub",
+            "_vec3_mul",
+            "_vec3_div",
+            "_vec3_scale",
+            "_vec3_dot",
+            "_vec3_len",
+            "_vec3_lenSq",
+            "_vec3_normalized",
+            "_vec3_angle",
+            "_vec3_project",
+            "_vec3_reject",
+            "_vec3_reflect",
+            "_vec3_cross",
+            "_vec3_lerp",
+            "_vec3_slerp",
+            "_vec3_nlerp",
+            "_vec3_compare"
+        };
         public Javascript(List<ParseTree.Declaration.File> parseTree, TypeDatabase types, TypeChecker checker) {
             ExpressionTypes = checker.ExpressionTypes;
             js = "";
@@ -41,7 +61,7 @@ namespace CScript {
         }
         public object Visit(ParseTree.Declaration.Variable d) { // Done
             string dName = d.Name.Lexeme;
-            if (dName == "array" || dName == "map" || dName == "string" || dName == "print" || dName == "Math" || dName == "math") {
+            if (dName == "array" || dName == "map" || dName == "string" || dName == "print" || dName == "Math" || dName == "math" || dName == "vec3") {
                 return d;
             }
 
@@ -77,9 +97,21 @@ namespace CScript {
         }
         public object Visit(ParseTree.Declaration.Function d) {  // Done
             string dName = d.Name.Lexeme;
-            
+            if (Vec3Functions.Contains(dName)) {
+                return d;
+            }
 
-            js += "function " + d.Name.Lexeme + "(";
+            return VisitForReal(d);
+        }
+        protected object VisitForReal(ParseTree.Declaration.Function d) {  // Done
+            string dName = d.Name.Lexeme;
+
+            if (Vec3Functions.Contains(dName)) {
+                js += "function (";
+            }
+            else {
+                js += "function " + dName + "(";
+            }
 
             for (int i = 0, size = d.Paramaters.Count; i < size; ++i) {
                 d.Paramaters[i].Type.Accept(this);
@@ -120,43 +152,91 @@ namespace CScript {
         }
         public object Visit(ParseTree.Declaration.Struct d) {
             string dName = d.Name.Lexeme;
-            if (dName == "_array" || dName == "_map" || dName == "_string" || dName == "_math") {
+            if (dName == "_array" || dName == "_map" || dName == "_string" || dName == "_math" || dName == "vec3") {
                 return d;
             }
 
-            js += "class " + d.Name.Lexeme + " {\n";
+            if (dName == "_vec3") {
+                dName = "vec3";
+            }
+            
+            js += "class " + dName + " {\n";
 
             js += "\tconstructor(";
-            for (int i = 0, size = d.Members.Count; i < size; ++i) {
-                string nam = d.Members[i].Name.Lexeme;
-                if (nam == "delete") {
-                    nam = "_delete__";
-                }
-                js += nam;
-                if (i < size - 1) {
-                    js += ", ";
+            if (dName == "vec3") {
+                js += "x, y, z";
+            }
+            else {
+                for (int i = 0, size = d.Members.Count; i < size; ++i) {
+                    string nam = d.Members[i].Name.Lexeme;
+                    if (nam == "delete") {
+                        nam = "_delete__";
+                    }
+                    js += nam;
+                    if (i < size - 1) {
+                        js += ", ";
+                    }
                 }
             }
             js += ") {\n";
 
-            for (int i = 0, size = d.Members.Count; i < size; ++i) {
-                string nam = d.Members[i].Name.Lexeme;
-                if (nam == "delete") {
-                    nam = "_delete__";
-                }
-                js += "\t\tthis." + d.Members[i].Name.Lexeme + " = ";
+            if (dName == "vec3") {
+                js += "\t\tthis.x = (typeof x === \"undefined\")? 0.0 : x;\n";
+                js += "\t\tthis.y = (typeof y === \"undefined\")? 0.0 : y;\n";
+                js += "\t\tthis.z = (typeof z === \"undefined\")? 0.0 : z;\n";
+            }
+            else {
+                for (int i = 0, size = d.Members.Count; i < size; ++i) {
+                    string nam = d.Members[i].Name.Lexeme;
+                    if (nam == "delete") {
+                        nam = "_delete__";
+                    }
+                    js += "\t\tthis." + d.Members[i].Name.Lexeme + " = ";
 
-                js += "(typeof " + nam + " === \"undefined\")? ";
-                if (d.Members[i].Initializer != null) {
-                    d.Members[i].Initializer.Accept(this);
+                    js += "(typeof " + nam + " === \"undefined\")? ";
+                    if (d.Members[i].Initializer != null) {
+                        d.Members[i].Initializer.Accept(this);
+                    }
+                    else {
+                        js += Types.GetDefualtValueAsString(d.Members[i].Type.GetPath());
+                    }
+                    js += " : " + nam + ";\n";
                 }
-                else {
-                    js += Types.GetDefualtValueAsString(d.Members[i].Type.GetPath());
-                }
-                js += " : " + nam + ";\n";
             }
 
             js += "\t}\n"; // End constructor
+
+            if (dName == "vec3") {
+                for (int i = 0, size = d.Members.Count; i < size; ++i) {
+                    string nam = d.Members[i].Name.Lexeme;
+                    if (nam == "delete") {
+                        nam = "_delete__";
+                    }
+                    js += "\tstatic " + d.Members[i].Name.Lexeme + " = ";
+
+                    if (d.Members[i].Initializer != null) {
+                        if (d.Members[i].Initializer is ParseTree.Expression.Literal) {
+                            d.Members[i].Initializer.Accept(this);
+                            js += ";\n\n";
+                        }
+                        else if (!(d.Members[i].Initializer is ParseTree.Expression.Get)) {
+                            Compiler.Error("Javascript Compiler", "vec3 initializer must be function", d.Members[i].Name.Location);
+                        }
+                        else {
+                            ParseTree.Expression.Get g = (ParseTree.Expression.Get)d.Members[i].Initializer;
+                            string funName = g.Property.Lexeme;
+                            ParseTree.Declaration.Function fun = Types.GetFunction(funName);
+                            Indent++;
+                            VisitForReal(fun);
+                            Indent--;
+                        }
+                    }
+                    else {
+                        js += Types.GetDefualtValueAsString(d.Members[i].Type.GetPath());
+                        js += ";\n";
+                    }
+                }
+            }
 
             js += "}\n";
 
@@ -332,9 +412,89 @@ namespace CScript {
             return e;
         }
         public object Visit(ParseTree.Expression.Binary e) {
+            string leftType = ExpressionTypes[e.Left];
+            string rightType = ExpressionTypes[e.Right];
+            if (e.Operator.Symbol == Symbol.PLUS) {
+                if (leftType == "string" && rightType == "vec3") {
+                    e.Left.Accept(this);
+                    js += " + (\"(\" + ";
+                    e.Right.Accept(this);
+                    js += ".x + \", \" + ";
+                    e.Right.Accept(this);
+                    js += ".y + \", \" + ";
+                    e.Right.Accept(this);
+                    js += ".z + \")\")";
+                    return e;
+                }
+                else if (leftType == "vec3" && rightType == "vec3") {
+                    js += "vec3.add(";
+                    e.Left.Accept(this);
+                    js += ", ";
+                    e.Right.Accept(this);
+                    js += ")";
+                    return e;
+                }
+            }
+            else if (e.Operator.Symbol == Symbol.MINUS) {
+                if (leftType == "vec3" && rightType == "vec3") {
+                    js += "vec3.sub(";
+                    e.Left.Accept(this);
+                    js += ", ";
+                    e.Right.Accept(this);
+                    js += ")";
+                    return e;
+                }
+            }
+            else if (e.Operator.Symbol == Symbol.SLASH) {
+                if (leftType == "vec3" && rightType == "vec3") {
+                    js += "vec3.div(";
+                    e.Left.Accept(this);
+                    js += ", ";
+                    e.Right.Accept(this);
+                    js += ")";
+                    return e;
+                }
+            }
+            else if (e.Operator.Symbol == Symbol.STAR) {
+                if (leftType == "vec3" && rightType == "vec3") {
+                    js += "vec3.mul(";
+                    e.Left.Accept(this);
+                    js += ", ";
+                    e.Right.Accept(this);
+                    js += ")";
+                    return e;
+                }
+                else if (leftType == "vec3" && rightType == "num") {
+                    js += "vec3.scale(";
+                    e.Left.Accept(this);
+                    js += ", ";
+                    e.Right.Accept(this);
+                    js += ")";
+                    return e;
+                }
+            }
+            else if (e.Operator.Symbol == Symbol.EQUAL_EQUAL) {
+                if (leftType == "vec3" && rightType == "vec3") {
+                    js += "vec3.compare(";
+                    e.Left.Accept(this);
+                    js += ", ";
+                    e.Right.Accept(this);
+                    js += ")";
+                    return e;
+                }
+            }
+
             e.Left.Accept(this);
 
-            js += " " + e.Operator.Lexeme + " ";
+            if (e.Operator.Symbol == Symbol.OR) {
+                js += " || ";
+            }
+            else if (e.Operator.Symbol == Symbol.AND) {
+                js += " && ";
+            }
+            else {
+                js += " " + e.Operator.Lexeme + " ";
+            }
 
             e.Right.Accept(this);
 
@@ -616,6 +776,18 @@ namespace CScript {
         }
         public object Visit(ParseTree.Expression.Cast e) {
             if (e.Target.GetPath() == "string") {
+                string objectType = ExpressionTypes[e.Object];
+                if (objectType == "vec3") {
+                    js += "(\"(\" + ";
+                    e.Object.Accept(this);
+                    js += ".x + \", \" + ";
+                    e.Object.Accept(this);
+                    js += ".y + \", \" + ";
+                    e.Object.Accept(this);
+                    js += ".z + \")\")";
+                    return e;
+                }
+
                 js += "(\"\"+";
             }
             e.Object.Accept(this);
