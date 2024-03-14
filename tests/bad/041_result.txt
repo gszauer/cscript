@@ -1,2 +1,0 @@
-TYPECHECKER error on line: 19, in file: ../../../tests/bad/041.txt
-Error: Calling PrintVec with argument (1) '_v' being the wrong type, expected: Vec3, got: object

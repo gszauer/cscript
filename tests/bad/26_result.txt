@@ -1,2 +1,0 @@
-TYPECHECKER error on line: 12, in file: ../../../tests/bad/26.txt
-Error: Global variables can only be instantiated with constant expressions.

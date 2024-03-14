@@ -1,0 +1,80 @@
+// This language is a lot like C with modern aminities
+
+/* There are three compilation modes:
+        project
+        file 
+        directory
+    in project mode, multiple files are compiled as one unit. Like C#
+    directory mode treats all files in a folder (recursive) as a project
+    file mode compiles only one file */
+
+// The compiler can link in known libraries
+#link Love2D
+
+// Type system
+
+/* Built in types:
+    num, bool, char,
+    string, object, void
+    $delegate, $enum, $function,
+    $array, $map */
+
+// structs can be used to define compound types
+// structs and functions can be templated
+// delegates can be templated
+// function body is optional, no body functions are extern.
+
+// Enums are normal
+enum ThisWorks {
+    EXACTLY,
+    AS = 8,
+    YOU,
+    THINK = 12
+}
+
+// delegates work the same way as they do in C#. 
+delegate num DoSomething(string[string] dictionary);
+delegate T DoElse<T, F>(F firstARg); // Delegates can be templated
+
+// Functions can not be overloaded
+void RunThisThing(num x) {
+
+}
+
+J RunThat<T, J>(num arg1, T arg2) {
+    return {};
+}
+// Not all functions are provided by the source code. 
+// To define a runtime provided function, omit the body
+num GetDeltaTime();
+
+
+//// Template Sample
+
+struct Map<K, V> {
+    MapBucket<K, V> Table; // Can't be accessed outside file because struct is private
+    num Count;
+    num Capacity;
+}
+
+#private
+struct MapBucket<K, V> {
+    K Key;
+    V[] Values;
+}
+
+#public
+void MapMap() {
+    Map<string, int> MyMap = InitMapEmpty<string, int>();
+    AddMap<string, int>("test", 8");
+
+    Map<string, int> MyOtherMap = InitCopy<string, int>(MyMap);
+}
+
+Map<K, V> InitMapEmpty<K, V>() {
+    Map<K, V> = {  }
+}
+
+Map<K, V> InitCopy<K, V>(Map<K, V> other) {
+
+}

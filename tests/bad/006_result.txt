@@ -1,2 +1,0 @@
-TYPECHECKER error on line: 16, in file: ../../../tests/bad/006.txt
-Error: Trying to assign iVal to char when it's declared as: int

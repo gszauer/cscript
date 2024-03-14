@@ -1,6 +1,0 @@
-a: False
-a: 8
-a: 3.14
-a: b
-hello
-a: 8

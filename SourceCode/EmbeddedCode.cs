@@ -1,0 +1,298 @@
+﻿namespace CScript {
+    public class Embedded {
+        protected static string BuiltInFunctions =
+"""
+// BUILT IN FUNCTIONS
+delegate void _print(string str);
+_print print = null;
+""";
+        protected static string ArrayAPI =
+"""
+// ARRAY API
+delegate num    _array_length(object array);
+delegate num    _array_first(object array, object value);
+delegate num    _array_last(object array, object value);
+delegate object _array_at(object array, num index);
+delegate object _array_concat(object array, object otherArray); 
+delegate string _array_join(object array, string delim);
+delegate object _array_pop(object array);
+delegate object _array_shift(object array);
+delegate object _array_slice(object array, num start, num count);
+delegate void   _array_sort(object array, _array_comparer comparer);
+delegate void   _array_reverse(object array);
+delegate void   _array_delete(object array, num start, num count);
+delegate void   _array_add(object array, object item);
+delegate void   _array_insert(object array, num index, object item);
+delegate object _array_copy(object array);
+delegate void   _array_clear(object array);
+delegate num    _array_comparer(object left, object right);
+
+struct _array {
+    _array_length       length;   
+    _array_first        first;    
+    _array_last         last;     
+    _array_at           at;       
+    _array_concat       concat;   
+    _array_join         join;     
+    _array_pop          pop;      
+    _array_shift        shift;    
+    _array_slice        slice;    
+    _array_sort         sort;
+    _array_reverse      reverse;  
+    _array_delete       remove;   
+    _array_add          add;    
+    _array_insert       insert;
+    _array_copy         copy;     
+    _array_clear        clear;    
+}
+
+_array array = new _array();
+""";
+        protected static string MapAPI =
+"""
+// MAP API
+delegate void _map_clear(object map);
+delegate object _map_delete(object map, object key);
+delegate object _map_get(object map, object key);
+delegate void _map_set(object map, object key, object value);
+delegate bool _map_has(object map, object key);
+delegate object _map_keys(object map);
+delegate object _map_values(object map);
+
+struct _map {
+    _map_clear  clear;
+    _map_delete remove;
+    _map_get    get;
+    _map_set    set;
+    _map_has    has;
+    _map_keys   keys;
+    _map_values values;
+}
+
+_map map = new _map(); 
+""";
+        protected static string StringAPI =
+"""
+// STRING API
+delegate void _str_len(string str);
+delegate char _str_at(string str, num index);
+delegate string _str_concat(string left, string right);
+delegate bool _str_ends(string str, string endsWith);
+delegate bool _str_starts(string str, string startsWith);
+delegate num _str_first(string str, string search);
+delegate num _str_last(string str, string search);
+delegate string _str_replace(string str, string replaceWhat, string replaceWith);
+delegate string[] _str_split(string str, string delim);
+delegate string _str_substr(string str, num start, num count);
+delegate string _str_lower(string str);
+delegate string _str_upper(string str);
+
+struct _string {
+    _str_len length;        
+    _str_at at;             
+    _str_concat concat;     
+    _str_ends ends;         
+    _str_starts starts;     
+    _str_first first;       
+    _str_last last;         
+    _str_split split;       
+    _str_lower lower;       
+    _str_upper upper;       
+    _str_replace replace;
+    _str_substr substring;
+
+}
+
+_string string = new _string();
+""";
+        protected static string FileAPI =
+"""
+delegate void OnFileLoaded(string path, char[] data);
+delegate void OnFileOperation(string path, bool success);
+
+delegate void _load_file(string path, OnFileLoaded callback);
+delegate void _write_file(string path, OnFileOperation callback);
+delegate void _fs_op(string path, OnFileOperation callback);
+
+struct _file {
+    _load_file read;
+    _write_file write;
+    _fs_op mkdir;
+    _fs_op rmdir;
+    _fs_op rmdoc;
+    _fs_op isdir;
+    _fs_op isdoc;    
+    _fs_op exists;
+    bool available = false;
+}
+
+_file file = new _file();
+""";
+        protected static string MathAPI =
+"""
+delegate num _math_no_arg();
+delegate num _math_one_arg(num n);
+delegate num _math_two_arg(num a, num b);
+
+struct _math {
+    num PI;
+
+    _math_one_arg abs;
+    _math_one_arg cos;
+    _math_one_arg sin;
+    _math_one_arg tan;
+    _math_one_arg sqrt;
+    _math_one_arg exp;
+    _math_one_arg pow;
+    _math_no_arg random;
+    _math_one_arg acos;
+    _math_one_arg asin;    
+    _math_one_arg atan;
+    _math_two_arg atan2;
+    _math_two_arg imul;
+    _math_two_arg max;
+    _math_two_arg min;
+    _math_two_arg log;
+    _math_one_arg ceil;    
+    _math_one_arg floor;
+    _math_one_arg round;
+    _math_one_arg sign;
+    _math_one_arg trunc;
+}
+
+_math Math = new _math();
+_math math = Math;
+""";
+        protected static string VectorAPI =
+"""
+struct vec3 {
+    num x = 0.0;
+    num y = 0.0;
+    num z = 0.0;
+}
+
+vec3 _vec3_add(vec3 left, vec3 right) {
+    return new vec3(
+        left.x + right.x, 
+        left.y + right.y, 
+        left.z + right.z
+    );
+}
+
+vec3 _vec3_sub(vec3 left, vec3 right) {
+    return new vec3(
+        left.x - right.x, 
+        left.y - right.y, 
+        left.z - right.z
+    );
+}
+
+vec3 _vec3_mul(vec3 left, vec3 right) {
+    return new vec3(
+        left.x * right.x, 
+        left.y * right.y, 
+        left.z * right.z
+    );
+}
+
+vec3 _vec3_div(vec3 left, vec3 right) {
+    return new vec3(
+        left.x / right.x, 
+        left.y / right.y, 
+        left.z / right.z
+    );
+}
+
+vec3 _vec3_scale(vec3 left, num right) {
+    return new vec3(
+        left.x * right, 
+        left.y * right, 
+        left.z * right
+    );
+}
+
+num _vec3_dot(vec3 left, vec3 right) {
+    reutrn left.x * right.x + left.y * right.y + left.z * right.z;
+}
+
+num _vec3_lenSq(vec3 v) {
+    reutrn v.x * v.x + v.y * v.y + v.z * v.z;
+}
+
+num _vec3_len(vec3 v) {
+    num res = v.x * v.x + v.y * v.y + v.z * v.z;
+    if (res < vec3.epsilon) {
+        return 0.0;
+    }
+    return Math.sqrt(res);
+}
+
+vec3 _vec3_normalized(vec3 v) {
+    num res = v.x * v.x + v.y * v.y + v.z * v.z;
+    if (res < vec3.epsilon) {
+        return v;
+    }
+    num invLen = 1.0 / math.sqrt(res);
+
+    return new vec3(v.x * invLen, v.y * invLen, v.z * invLen);
+}
+
+
+delegate vec3 _vec3_flt(vec3 left, num right);
+delegate num _vec3_num(vec3 vec);
+delegate vec3 _vec3_bin(vec3 left, vec3 right);
+delegate vec3 _vec3_bin_num(vec3 left, vec3 right, num t);
+delegate vec3  _vec3_vec3(vec3 vec);
+delegate num  _vec3_bin_num(vec3 left, vec3 right);
+delegate bool  _vec3_bin_bool(vec3 left, vec3 right);
+
+struct _vec3 {
+    num epsilon = 0.0001;
+    _vec3_bin add = _vec3_add;
+    _vec3_bin sub = _vec3_sub;
+    _vec3_bin mul = _vec3_mul;
+    _vec3_bin div = _vec3_div;
+    _vec3_flt scale = _vec3_scale;
+    _vec3_bin_num dot = _vec3_dot;
+    _vec3_num len = _vec3_len;
+    _vec3_num lenSq = _vec3_lenSq;
+    _vec3_vec3 normalized = _vec3_normalized;
+    _vec3_bin_num angle
+    _vec3_bin project
+    _vec3_bin reject
+    _vec3_bin reflect
+    _vec3_bin cross
+    _vec3_bin_num lerp
+    _vec3_bin_num slerp
+    _vec3_bin_num nlerp
+    _vec3_bin_bool compare 
+}
+
+_vec3 vec3 = new _vec3();
+
+
+
+""";
+        public static string InternalCode {
+            get {
+                return BuiltInFunctions + "\n" +
+                    ArrayAPI + "\n" +
+                    MapAPI + "\n" +
+                    StringAPI + "\n" +
+                    MathAPI;
+            }
+        }
+
+        public static string ExternalCode {
+            get {
+                // TODO: IMPLEMENT FILE API
+                // TODO: VEC2, VEC3, VEC4
+                // TODO: MAT2, MAT3, MAT4
+                // TODO: QUAT
+                // TODO: RENDERING API
+                // TODO: AUDIO API
+                return FileAPI;
+            }
+        }
+    }
+}

@@ -1,2 +1,0 @@
-TYPECHECKER error on line: 13, in file: ../../../tests/bad/012.txt
-Error: Trying to initialize bDefault to char when it's declared as: bool

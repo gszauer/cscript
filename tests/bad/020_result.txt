@@ -1,2 +1,0 @@
-TYPECHECKER error on line: 45, in file: ../../../tests/bad/020.txt
-Error: Calling TakeNumber with argument (1) 'y' being the wrong type, expected: int, got: void

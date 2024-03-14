@@ -1,2 +1,0 @@
-TYPECHECKER error on line: 47, in file: ../../../tests/bad/032.txt
-Error: Calling p with argument (1) 'o' being the wrong type, expected: object, got: $struct

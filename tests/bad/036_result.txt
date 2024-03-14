@@ -1,2 +1,0 @@
-TYPECHECKER error on line: 47, in file: ../../../tests/bad/036.txt
-Error: Calling AddVectors with argument (1) 'a' being the wrong type, expected: Vec3, got: object

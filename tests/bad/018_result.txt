@@ -1,2 +1,0 @@
-TYPECHECKER error on line: 49, in file: ../../../tests/bad/018.txt
-Error: Returning char when function declares: int

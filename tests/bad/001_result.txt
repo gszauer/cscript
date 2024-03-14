@@ -1,2 +1,0 @@
-PARSER error on line: 6, in file: ../../../tests/bad/001.txt
-Error: Invalid variable type: void

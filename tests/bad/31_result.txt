@@ -1,2 +1,0 @@
-PARSER error on line: 34, in file: ../../../tests/bad/31.txt
-Error: Unexpected token: object

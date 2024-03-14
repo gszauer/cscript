@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>preview</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\SourceCode\Compiler.cs" Link="Compiler.cs" />
+    <Compile Include="..\SourceCode\EmbeddedCode.cs" Link="EmbeddedCode.cs" />
+    <Compile Include="..\SourceCode\Javascript.cs" Link="Javascript.cs" />
+    <Compile Include="..\SourceCode\Parser.cs" Link="Parser.cs" />
+    <Compile Include="..\SourceCode\ParseTree.cs" Link="ParseTree.cs" />
+    <Compile Include="..\SourceCode\ParseTreeVisitorTemplate.cs" Link="ParseTreeVisitorTemplate.cs" />
+    <Compile Include="..\SourceCode\Program.cs" Link="Program.cs" />
+    <Compile Include="..\SourceCode\Scanner.cs" Link="Scanner.cs" />
+    <Compile Include="..\SourceCode\TypeChecker.cs" Link="TypeChecker.cs" />
+    <Compile Include="..\SourceCode\TypeDatabase.cs" Link="TypeDatabase.cs" />
+  </ItemGroup>
+
+</Project>

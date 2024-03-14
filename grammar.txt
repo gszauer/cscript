@@ -1,27 +1,44 @@
 
-program -> (declaration)*;
+// Declarations
+declaration -> variable | function | enum | delegate | struct | constructor
 
-declaration = varDeclStatement | funDeclStatement | structDeclStatement;
-varDeclStatement -> IDENTIFIER IDENTIFIER ("=" expression)? ";";
-funDeclStatement -> IDENTIFIER IDENTIFIER "(" funParamaters? ")" blockStatement;
-structDeclStatement -> "struct" IDENTIFIER "{" varDeclStatement* "}";
+variable -> type IDENTIFIER ("=" expression)? ";"
+function -> type IDENTIFIER "(" paramaters? ")" (";" | block)
+paramaters -> type IDENTIFIER ("," type IDENTIFIER)*
+enum -> "enum" IDENTIFIER "{" members? "}"
+members -> IDENTIFIER ("=" NUMBER)? ("," IDENTIFIER ("=" NUMBER)?)*
+delegate -> "delegate" type IDENTIFIER "(" paramaters? ")" ";"
+struct -> "struct" IDENTIFIER "{"  variable* "}"
+constructor -> "constructor" IDENTIFIER "(" IDENTIFIER IDENTIFIER ("," type IDENTIFIER)* ")" block
 
-statement -> expressionStatement | printStatement | varDeclStatement | blockStatement | typeExpression;
-expressionStatement -> expression ";";
-printStatement -> "print" "(" expression? ")" ";";
-blockStatement -> "{" statement* "}";
-returnStatement -> "return" expression? ";";
+// Statements 
+statement -> block | if | for | while | control | variable
+block -> "{" statement* "}"
+control -> "return" expression? ";" | "continue" ";" | "break"
+variable -> type IDENTIFIER ("=" expression)? ";"
+if -> "if" "(" expression ")" block ("else" (if | block))*
+while -> "while" "(" expression? ")" (block | ";")
+for -> "for" "(" init? ";" expression? ";" iter? ")" (block | ";")
+init ->  type IDENTIFIER ("=" expression)? ("," IDENTIFIER ("=" expression)?)* 
+iter -> expression ("," expression)*
 
-expression -> assignment | typeExpression;
-typeExpression -> "type" "(" "dynamic"? expression ")" ";";
-assignment -> (call ".")? IDENTIFIER "=" assignment | isExpression | typeExpression;
-isExpression -> add_sub ("is" IDENTIFIER)?;
-add_sub -> mul_div (("+" | "-") mul_div)*;
-mul_div -> asExpression (("*" | "/") asExpression)*;
-asExpression -> unary ("as" IDENTIFIER)?;
-unary -> ("!" | "-") unary | call;
-call -> primary ("(" callArguments? ")" | "." IDENTIFIER)*;
-primary -> NUMBER | IDENTIFIER | CHAR | "true" | "false" | "(" expression ")";
+// Expressions
+expression -> assignment  
+assignment -> (call ".")? IDENTIFIER ("=" | "+=" | "-=" | "*=" | "/=" | ^= | %=) (assignment | logical)
+logical -> equality (("and" | "or") equality)*
+equality -> comparison (("!=" | "==" | "~=") comparison)*
+comparison -> term ((">" | ">= | "<" | "<=") term)*
+term -> factor (("+" | "-") factor)*
+factor -> power (("/" | "*" | "%") power)*
+power -> pre ("^" pre)*
+pre -> ("-" | "!" | "~" | "++" | "--") pre | post;
+post -> cast ("++" | "--")?
+cast -> call (("as") variableType)?
+call -> primary ( "(" arguments? ")" | "[" expression "]" | "." IDENTIFIER)*
+arguments -> expression (", " expression)*
+primary -> literal | "(" expression ")" | IDENTIFIER | new
+new -> "new" IDENTIFIER "(" paramaters? ")" block
+literal -> NUMBER | BOOLEAN | CHAR | STRING | "null" | "true" | "false"
 
-funParamaters -> IDENTIFIER IDENTIFIER ("," IDENTIFIER IDENTIFIER )*;
-callArguments -> expression ("," expression)*;
+// Type lives outside all that, i think it's it's own thing...
+type -> ("num" | "bool" | "char" | "string" | "object" | "void" | IDENTIFIER) ("[" type? "]")+

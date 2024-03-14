@@ -1,2 +1,0 @@
-PARSER error on line: 6, in file: ../../../tests/bad/002.txt
-Error: Unexpected token: void

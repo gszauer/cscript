@@ -1,2 +1,0 @@
-TYPETABLE error on line: 9, in file: ../../../tests/bad/040.txt
-Error: Trying to access undeclared type: dynamic
