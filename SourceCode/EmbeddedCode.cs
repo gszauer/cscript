@@ -180,6 +180,7 @@ struct vec4 {
     num x = 0.0;
     num y = 0.0;
     num z = 0.0;
+    num w = 0.0;
 }
 
 struct _vec2 {
@@ -225,6 +226,28 @@ struct _vec3 {
     _vec3_bin_bool      compare     = _vec3_compare;
 }
 
+struct _vec4 {
+    num epsilon = 0.0001;
+    _vec4_bin           add         = _vec4_add;
+    _vec4_bin           sub         = _vec4_sub;
+    _vec4_bin           mul         = _vec4_mul;
+    _vec4_bin           div         = _vec4_div;
+    _vec4_flt           scale       = _vec4_scale;
+    _vec4_bin_num       dot         = _vec4_dot;
+    _vec4_num           len         = _vec4_len;
+    _vec4_num           lenSq       = _vec4_lenSq;
+    _vec4_vec4          normalized  = _vec4_normalized;
+    _vec4_bin_num       angle       = _vec4_angle;
+    _vec4_bin           project     = _vec4_project;
+    _vec4_bin           reject      = _vec4_reject;
+    _vec4_bin           reflect     = _vec4_reflect;
+    _vec4_bin_vec3      cross       = _vec4_cross;
+    _vec4_interpolate   lerp        = _vec4_lerp;
+    _vec4_interpolate   slerp       = _vec4_slerp;
+    _vec4_interpolate   nlerp       = _vec4_nlerp;
+    _vec4_bin_bool      compare     = _vec4_compare;
+}
+
 vec2 _vec2_add(vec2 left, vec2 right) {
     return new vec2(
         left.x + right.x, 
@@ -237,6 +260,15 @@ vec3 _vec3_add(vec3 left, vec3 right) {
         left.x + right.x, 
         left.y + right.y, 
         left.z + right.z
+    );
+}
+
+vec4 _vec4_add(vec4 left, vec4 right) {
+    return new vec4(
+        left.x + right.x, 
+        left.y + right.y, 
+        left.z + right.z,
+        left.w + right.w
     );
 }
 
@@ -255,6 +287,15 @@ vec3 _vec3_sub(vec3 left, vec3 right) {
     );
 }
 
+vec4 _vec4_sub(vec4 left, vec4 right) {
+    return new vec4(
+        left.x - right.x, 
+        left.y - right.y, 
+        left.z - right.z,
+        left.w - right.w
+    );
+}
+
 vec2 _vec2_mul(vec2 left, vec2 right) {
     return new vec2(
         left.x * right.x, 
@@ -267,6 +308,15 @@ vec3 _vec3_mul(vec3 left, vec3 right) {
         left.x * right.x, 
         left.y * right.y, 
         left.z * right.z
+    );
+}
+
+vec4 _vec4_mul(vec4 left, vec4 right) {
+    return new vec4(
+        left.x * right.x, 
+        left.y * right.y, 
+        left.z * right.z,
+        left.w * right.w
     );
 }
 
@@ -285,6 +335,15 @@ vec3 _vec3_div(vec3 left, vec3 right) {
     );
 }
 
+vec4 _vec4_div(vec4 left, vec4 right) {
+    return new vec4(
+        left.x / right.x, 
+        left.y / right.y, 
+        left.z / right.z,
+        left.w / right.w
+    );
+}
+
 vec2 _vec2_scale(vec2 left, num right) {
     return new vec2(
         left.x * right, 
@@ -300,6 +359,15 @@ vec3 _vec3_scale(vec3 left, num right) {
     );
 }
 
+vec4 _vec4_scale(vec4 left, num right) {
+    return new vec4(
+        left.x * right, 
+        left.y * right, 
+        left.z * right,
+        left.w * right
+    );
+}
+
 num _vec2_dot(vec2 left, vec2 right) {
     return left.x * right.x + left.y * right.y;
 }
@@ -308,12 +376,20 @@ num _vec3_dot(vec3 left, vec3 right) {
     return left.x * right.x + left.y * right.y + left.z * right.z;
 }
 
+num _vec4_dot(vec4 left, vec4 right) {
+    return left.x * right.x + left.y * right.y + left.z * right.z + left.w * right.w;
+}
+
 num _vec2_lenSq(vec2 v) {
     return v.x * v.x + v.y * v.y;
 }
 
 num _vec3_lenSq(vec3 v) {
     return v.x * v.x + v.y * v.y + v.z * v.z;
+}
+
+num _vec4_lenSq(vec4 v) {
+    return v.x * v.x + v.y * v.y + v.z * v.z + v.w * v.w;
 }
 
 num _vec2_len(vec2 v) {
@@ -327,6 +403,14 @@ num _vec2_len(vec2 v) {
 num _vec3_len(vec3 v) {
     num res = v.x * v.x + v.y * v.y + v.z * v.z;
     if (res < vec3.epsilon) {
+        return 0.0;
+    }
+    return Math.sqrt(res);
+}
+
+num _vec4_len(vec4 v) {
+    num res = v.x * v.x + v.y * v.y + v.z * v.z + v.w * v.w;
+    if (res < vec4.epsilon) {
         return 0.0;
     }
     return Math.sqrt(res);
@@ -350,6 +434,16 @@ vec3 _vec3_normalized(vec3 v) {
     num invLen = 1.0 / math.sqrt(res);
 
     return new vec3(v.x * invLen, v.y * invLen, v.z * invLen);
+}
+
+vec4 _vec4_normalized(vec4 v) {
+    num res = v.x * v.x + v.y * v.y + v.z * v.z + v.w * v.w;
+    if (res < vec4.epsilon) {
+        return v;
+    }
+    num invLen = 1.0 / math.sqrt(res);
+
+    return new vec4(v.x * invLen, v.y * invLen, v.z * invLen, v.w * invLen);
 }
 
 num _vec2_angle(vec2 l, vec2 r) {
@@ -378,6 +472,19 @@ num _vec3_angle(vec3 l, vec3 r) {
 	return math.acos(dot / len);
 }
 
+num _vec4_angle(vec4 l, vec4 r) {
+	num sqMagL = l.x * l.x + l.y * l.y + l.z * l.z + l.w * l.w;
+	num sqMagR = r.x * r.x + r.y * r.y + r.z * r.z + r.w * r.w;
+
+	if (sqMagL < vec4.epsilon or sqMagR < vec4.epsilon) {
+		return 0.0;
+	}
+
+	num dot = l.x * r.x + l.y * r.y + l.z * r.z * l.w * r.w;
+	num len = math.sqrt(sqMagL) * math.sqrt(sqMagR);
+	return math.acos(dot / len);
+}
+
 vec2 _vec2_project(vec2 a, vec2 b) {
 	num magBSq = _vec2_len(b);
 	if (magBSq < vec2.epsilon) {
@@ -396,6 +503,15 @@ vec3 _vec3_project(vec3 a, vec3 b) {
 	return b * scale;
 }
 
+vec4 _vec4_project(vec4 a, vec4 b) {
+	num magBSq = _vec4_len(b);
+	if (magBSq < vec4.epsilon) {
+		return new vec4();
+	}
+	num scale = _vec4_dot(a, b) / magBSq;
+	return b * scale;
+}
+
 vec2 _vec2_reject(vec2 a, vec2 b) {
 	vec2 projection = _vec2_project(a, b);
 	return a - projection;
@@ -403,6 +519,11 @@ vec2 _vec2_reject(vec2 a, vec2 b) {
 
 vec3 _vec3_reject(vec3 a, vec3 b) {
 	vec3 projection = _vec3_project(a, b);
+	return a - projection;
+}
+
+vec4 _vec4_reject(vec4 a, vec4 b) {
+	vec4 projection = _vec4_project(a, b);
 	return a - projection;
 }
 
@@ -426,7 +547,25 @@ vec3 _vec3_reflect(vec3 a, vec3 b) {
 	return a - proj2;
 }
 
+vec4 _vec4_reflect(vec4 a, vec4 b) {
+	num magBSq = _vec4_len(b);
+	if (magBSq < vec4.epsilon) {
+		return new vec4();
+	}
+	num scale = _vec4_dot(a, b) / magBSq;
+	vec4 proj2 = b * (scale * 2);
+	return a - proj2;
+}
+
 vec3 _vec3_cross(vec3 l, vec3 r) {
+	return new vec3(
+		l.y * r.z - l.z * r.y,
+		l.z * r.x - l.x * r.z,
+		l.x * r.y - l.y * r.x
+	);
+}
+
+vec3 _vec4_cross(vec4 l, vec4 r) {
 	return new vec3(
 		l.y * r.z - l.z * r.y,
 		l.z * r.x - l.x * r.z,
@@ -446,6 +585,15 @@ vec3 _vec3_lerp(vec3 s, vec3 e, num t) {
 		s.x + (e.x - s.x) * t,
 		s.y + (e.y - s.y) * t,
 		s.z + (e.z - s.z) * t
+	);
+}
+
+vec4 _vec4_lerp(vec4 s, vec4 e, num t) {
+	return new vec4(
+		s.x + (e.x - s.x) * t,
+		s.y + (e.y - s.y) * t,
+		s.z + (e.z - s.z) * t,
+        s.w + (e.w - s.w) * t
 	);
 }
 
@@ -483,6 +631,23 @@ vec3 _vec3_slerp(vec3 s, vec3 e, num t) {
 	return from * a + to * b;
 }
 
+vec4 _vec4_slerp(vec4 s, vec4 e, num t) {
+	if (t < vec4.epsilon) {
+		return _vec4_lerp(s, e, t);
+	}
+
+	vec4 from = _vec4_normalized(s);
+	vec4 to = _vec4_normalized(e);
+
+	num theta = _vec4_angle(from, to);
+	num sin_theta = math.sin(theta);
+
+	num a = math.sin((1.0 - t) * theta) / sin_theta;
+	num b = math.sin(t * theta) / sin_theta;
+
+	return from * a + to * b;
+}
+
 vec2 _vec2_nlerp(vec2 s, vec2 e, num t) {
 	vec2 linear = new vec2(
 		s.x + (e.x - s.x) * t,
@@ -500,6 +665,16 @@ vec3 _vec3_nlerp(vec3 s, vec3 e, num t) {
 	return _vec3_normalized(linear);
 }
 
+vec4 _vec4_nlerp(vec4 s, vec4 e, num t) {
+	vec4 linear = new vec4(
+		s.x + (e.x - s.x) * t,
+		s.y + (e.y - s.y) * t,
+		s.z + (e.z - s.z) * t,
+        s.w + (e.w - s.w) * t
+	);
+	return _vec4_normalized(linear);
+}
+
 bool _vec2_compare(vec2 l, vec2 r) {
     num dx = l.x - r.x;
     num dy = l.y - r.y;
@@ -515,6 +690,14 @@ bool _vec3_compare(vec3 l, vec3 r) {
 	return lenSq < vec3.epsilon;
 }
 
+bool _vec4_compare(vec4 l, vec4 r) {
+    num dx = l.x - r.x;
+    num dy = l.y - r.y;
+    num dz = l.z - r.z;
+    num dw = l.w - r.w;
+    num lenSq = dx * dx + dy * dy + dz * dz + dw * dw;
+	return lenSq < vec4.epsilon;
+}
 
 delegate vec2 _vec2_flt(vec2 left, num right);
 delegate num _vec2_num(vec2 vec);
@@ -532,8 +715,18 @@ delegate num  _vec3_bin_num(vec3 left, vec3 right);
 delegate vec3  _vec3_vec3(vec3 vec);
 delegate bool  _vec3_bin_bool(vec3 left, vec3 right);
 
+delegate vec4 _vec4_flt(vec4 left, num right);
+delegate num _vec4_num(vec4 vec);
+delegate vec4 _vec4_bin(vec4 left, vec4 right);
+delegate vec3 _vec4_bin_vec3(vec4 left, vec4 right);
+delegate vec4 _vec4_interpolate(vec4 left, vec4 right, num t);
+delegate num  _vec4_bin_num(vec4 left, vec4 right);
+delegate vec4  _vec4_vec4(vec4 vec);
+delegate bool  _vec4_bin_bool(vec4 left, vec4 right);
+
 _vec2 vec2 = new _vec2();
 _vec3 vec3 = new _vec3();
+_vec3 vec4 = new _vec4();
 """;
         public static string InternalCode {
             get {

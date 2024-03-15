@@ -46,6 +46,26 @@ namespace CScript {
             "_vec3_nlerp",
             "_vec3_compare"
         };
+        protected static List<string> Vec4Functions = new List<string>() {
+            "_vec4_add",
+            "_vec4_sub",
+            "_vec4_mul",
+            "_vec4_div",
+            "_vec4_scale",
+            "_vec4_dot",
+            "_vec4_len",
+            "_vec4_lenSq",
+            "_vec4_normalized",
+            "_vec4_angle",
+            "_vec4_project",
+            "_vec4_reject",
+            "_vec4_reflect",
+            "_vec4_cross",
+            "_vec4_lerp",
+            "_vec4_slerp",
+            "_vec4_nlerp",
+            "_vec4_compare"
+        };
         public Javascript(List<ParseTree.Declaration.File> parseTree, TypeDatabase types, TypeChecker checker) {
             ExpressionTypes = checker.ExpressionTypes;
             js = "";
@@ -116,10 +136,9 @@ namespace CScript {
         }
         public object Visit(ParseTree.Declaration.Function d) {  // Done
             string dName = d.Name.Lexeme;
-            if (Vec2Functions.Contains(dName)) {
-                return d;
-            }
-            if (Vec3Functions.Contains(dName)) {
+            if (Vec2Functions.Contains(dName) ||
+                Vec3Functions.Contains(dName) ||
+                Vec4Functions.Contains(dName)) {
                 return d;
             }
 
@@ -128,7 +147,7 @@ namespace CScript {
         protected object VisitForReal(ParseTree.Declaration.Function d) {  // Done
             string dName = d.Name.Lexeme;
 
-            if (Vec3Functions.Contains(dName) || Vec2Functions.Contains(dName)) {
+            if (Vec3Functions.Contains(dName) || Vec2Functions.Contains(dName) || Vec4Functions.Contains(dName)) {
                 js += "function (";
             }
             else {
