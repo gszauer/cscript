@@ -61,7 +61,7 @@
             }
             else {
                 string lex = name.Lexeme;
-                if (lex == "vec3") {
+                if (lex == "vec3" || lex == "vec2" || lex == "vec4") {
                     allowStruct = true;
                 }
             }

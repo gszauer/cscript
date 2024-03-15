@@ -529,14 +529,22 @@ namespace CScript {
                             }
                         }
                     }
-                    else if (rightType == "vec3") {
+                    else if (rightType == "vec3" || rightType == "vec2" || rightType == "vec4") {
                         ExpressionTypes.Add(e, "string");
                         return e;
                     }
                     Compiler.Error("Type Checker", "Invalid string concat between: " + leftType + " and " + rightType, e.Operator.Location);
                 }
+                else if (leftType == "vec2" && rightType == "vec2") {
+                    ExpressionTypes.Add(e, "vec2");
+                    return e;
+                }
                 else if (leftType == "vec3" && rightType == "vec3") {
                     ExpressionTypes.Add(e, "vec3");
+                    return e;
+                }
+                else if (leftType == "vec4" && rightType == "vec4") {
+                    ExpressionTypes.Add(e, "vec4");
                     return e;
                 }
             }
@@ -545,10 +553,26 @@ namespace CScript {
                     ExpressionTypes.Add(e, "vec3");
                     return e;
                 }
+                if (leftType == "vec2" && rightType == "vec2") {
+                    ExpressionTypes.Add(e, "vec2");
+                    return e;
+                }
+                if (leftType == "vec4" && rightType == "vec4") {
+                    ExpressionTypes.Add(e, "vec4");
+                    return e;
+                }
             }
             else if (e.Operator.Symbol == Symbol.STAR) {
                 if (leftType == "vec3" && rightType == "num") {
                     ExpressionTypes.Add(e, "vec3");
+                    return e;
+                }
+                if (leftType == "vec2" && rightType == "num") {
+                    ExpressionTypes.Add(e, "vec2");
+                    return e;
+                }
+                if (leftType == "vec4" && rightType == "num") {
+                    ExpressionTypes.Add(e, "vec4");
                     return e;
                 }
             }

@@ -21,6 +21,7 @@ num main(string[] args) {
 
     bool same = up == right;
     bool thisTime = up == new vec3(0, 1, 0);
+    bool hammerTime = up != new vec3(0, 1, 0);
     if (same) {
         print("wrong");
     }

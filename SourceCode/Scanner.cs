@@ -31,8 +31,6 @@ namespace CScript {
         TYPE_NUM, TYPE_CHAR, TYPE_BOOL, TYPE_STRING, TYPE_OBJECT, TYPE_VOID,
         LIT_NUM, LIT_CHAR, LIT_BOOL, LIT_STRING, LIT_NULL,
 
-        //TYPE_VEC3,
-
         RESERVED_THIS, RESERVED_CONSTRUCTOR
     }
     public class Location {
@@ -105,7 +103,6 @@ namespace CScript {
                 Keywords.Add("char", Symbol.TYPE_CHAR);
                 Keywords.Add("bool", Symbol.TYPE_BOOL);
                 Keywords.Add("string", Symbol.TYPE_STRING);
-                //Keywords.Add("vec3", Symbol.TYPE_VEC3);
                 Keywords.Add("object", Symbol.TYPE_OBJECT);
                 Keywords.Add("void", Symbol.TYPE_VOID);
                 Keywords.Add("this", Symbol.RESERVED_THIS);

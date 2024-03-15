@@ -15,6 +15,7 @@
     <Compile Include="..\SourceCode\Parser.cs" Link="Parser.cs" />
     <Compile Include="..\SourceCode\ParseTree.cs" Link="ParseTree.cs" />
     <Compile Include="..\SourceCode\ParseTreeVisitorTemplate.cs" Link="ParseTreeVisitorTemplate.cs" />
+    <Compile Include="..\SourceCode\PrettyPrinter.cs" Link="PrettyPrinter.cs" />
     <Compile Include="..\SourceCode\Program.cs" Link="Program.cs" />
     <Compile Include="..\SourceCode\Scanner.cs" Link="Scanner.cs" />
     <Compile Include="..\SourceCode\TypeChecker.cs" Link="TypeChecker.cs" />
