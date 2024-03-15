@@ -728,6 +728,59 @@ _vec2 vec2 = new _vec2();
 _vec3 vec3 = new _vec3();
 _vec3 vec4 = new _vec4();
 """;
+        protected static string QuaternionAPI =
+"""
+struct quat {
+    num x = 0.0;
+    num y = 0.0;
+    num z = 0.0;
+    num w = 1.0;
+}
+
+struct _quat {
+    num epsilon = 0.0001;
+    _qdel_fromAngleAxis;
+    _qdel_fromTo;
+    _qdel_getAxis;
+    _qdel_getAngle;
+    _qdel_add;
+    _qdel_sub;
+    _qdel_scale;
+    _qdel_negate;
+    _qdel_compare;
+    _qdel_sameOrientation;
+}
+
+delegate quat   _qdel_fromAngleAxis(num angle, vec3 axis);
+delegate quat   _qdel_fromTo(vec3 from, vec3 to);
+delegate vec3   _qdel_getAxis(quat q);
+delegate num    _qdel_getAngle(quat q);
+delegate quat   _qdel_add(quat a, quat b);
+delegate quat   _qdel_sub(quat a, quat b);
+delegate quat   _qdel_scale(quat a, num b);
+delegate quat   _qdel_negate(quat q);
+delegate bool   _qdel_compare(quat left, quat right);
+delegate bool   _qdel_sameOrientation(quat left, quat right);
+
+
+/*float dot(const quat& a, const quat& b);
+float lenSq(const quat& q);
+float len(const quat& q);
+void normalize(quat& q);
+quat normalized(const quat& q);
+quat conjugate(const quat& q);
+quat inverse(const quat& q);
+quat operator*(const quat& Q1, const quat& Q2);
+vec3 operator*(const quat& q, const vec3& v);
+quat mix(const quat& from, const quat& to, float t);
+quat nlerp(const quat& from, const quat& to, float t);
+quat operator^(const quat& q, float f);
+quat operator^(const quat& q, float f);
+quat slerp(const quat& start, const quat& end, float t);
+quat lookRotation(const vec3& direcion, const vec3& up);
+mat4 quatToMat4(const quat& q);
+quat mat4ToQuat(const mat4& m);*/
+""";
         public static string InternalCode {
             get {
                 return BuiltInFunctions + "\n" +
@@ -735,7 +788,8 @@ _vec3 vec4 = new _vec4();
                     MapAPI + "\n" +
                     StringAPI + "\n" +
                     MathAPI + "\n" +
-                    VectorAPI;
+                    VectorAPI + "\n" +
+                    QuaternionAPI;
             }
         }
 
