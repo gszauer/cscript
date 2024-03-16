@@ -406,6 +406,10 @@ namespace CScript {
                     if (Match(s, '.')) {
                         while (MatchNumber(s)) ;
                     }
+                    if (Match(s, 'f')) {
+                        Token debug = MakeToken(s, Symbol.LIT_NUM);
+                        Error(s, "f suffix on float is not needed! (" + debug.Lexeme + ")");
+                    }
                     return MakeToken(s, Symbol.LIT_NUM);
                 }
                 else if (c == '_' || IsAlpha(c)) {
@@ -418,7 +422,7 @@ namespace CScript {
                         return MakeToken(s, Keywords[lexeme]);
                     }
                     else if (Reserved.Contains(lexeme)) {
-                        Compiler.Error("Scanner", "Using javascript reserved keyword: " + lexeme, new Location(s.File, s.Line, s.Column));
+                        Error(s, "Using javascript reserved keyword: " + lexeme);
                     }
                     return MakeToken(s, Symbol.IDENTIFIER);
                 }

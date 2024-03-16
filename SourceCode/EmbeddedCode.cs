@@ -739,45 +739,287 @@ struct quat {
 
 struct _quat {
     num epsilon = 0.0001;
-    _qdel_fromAngleAxis;
-    _qdel_fromTo;
-    _qdel_getAxis;
-    _qdel_getAngle;
-    _qdel_add;
-    _qdel_sub;
-    _qdel_scale;
-    _qdel_negate;
-    _qdel_compare;
-    _qdel_sameOrientation;
+    _qdel_fromAngleAxis     fromAngleAxis           = _quat_angleAxis;
+    _qdel_fromTo            fromTo                  = _quat_fromTo;       
+    _qdel_fromTo            look                    = _quat_lookRotation;       
+    _qdel_getAxis           getAxis                 = _quat_getAxis;
+    _quat_del_num           getAngle                = _quat_getAngle;
+    _qdel_bin               add                     = _quat_add;
+    _qdel_bin               sub                     = _quat_sub;
+    _qdel_bin               mul                     = _quat_mul;
+    _quat_del_quat_vec_vec  rotate                  = _quat_rotate; // rotates vec3
+    _qdel_scale             scale                   = _quat_scale;
+    _quat_del_quat          negate                  = _quat_negate;
+    _qdel_compare           compare                 = _quat_compare;
+    _qdel_compare           compareOrientation      = _quat_compare_orientation;
+    _qdel_dot               dot                     = _quat_dot;
+    _quat_del_num           lenSq                   = _quat_lenSq;
+    _quat_del_num           len                     = _quat_len;
+    _quat_del_quat          normalized              = _quat_normalized;
+    _quat_del_quat          conjugate               = _quat_conjugate;
+    _quat_del_quat          inverse                 = _quat_inverse;
+    _quat_del_mix           mix                     = _quat_mix;
+    _quat_del_mix           nlerp                   = _quat_nlerp;
+    _quat_del_mix           slerp                   = _quat_slerp;
+    _qdel_scale             pow                     = _quat_pow;
+}
+
+
+quat _quat_lookRotation(vec3 direcion, vec3 up) {
+	// Find orthonormal basis vectors
+	vec3 f = vec3.normalized(direcion);
+	vec3 u = vec3.normalized(up);
+	vec3 r = vec3.cross(u, f);
+	u = vec3.cross(f, r);
+
+    vec3 _up = new vec3(0, 1, 0);
+    vec3 _forward = new vec3(0, 0, 1);
+
+	// From world forward to object forward
+	quat f2d = quat.fromTo(_forward, f);
+
+	// what direction is the new object up?
+	vec3 objectUp = f2d * _up;
+	// From object up to desired up
+	quat u2u = quat.fromTo(objectUp, u);
+
+	// Rotate to forward direction first, then twist to correct up
+	quat result = f2d * u2u;
+	// Don’t forget to normalize the result
+	return quat.normalized(result);
+}
+
+quat _quat_slerp(quat start, quat end, num t) {
+	if (math.abs(quat.dot(start, end)) > 1.0 - quat.epsilon) {
+		return quat.nlerp(start, end, t);
+	}
+
+	return quat.normalized(
+        (
+            quat.pow(
+                quat.inverse(start) * end,  t
+            )
+        ) * start
+    );
+}
+
+quat _quat_pow(quat q, num f) {
+    vec3 vector = new vec3(q.x, q.y, q.z);
+    num scalar = q.w;
+
+	num angle = 2.0 * math.acos(scalar);
+	vec3 axis = vec3.normalized(vector);
+
+	num halfCos = math.cos(f * angle * 0.5);
+	num halfSin = math.sin(f * angle * 0.5);
+
+	return new quat(
+		axis.x * halfSin,
+		axis.y * halfSin,
+		axis.z * halfSin,
+		halfCos
+	);
+}
+
+quat _quat_mix(quat from, quat to, num t) {
+	return from * (1.0 - t) + to * t;
+}
+
+quat _quat_nlerp(quat from, quat to, num t) {
+	return quat.normalized(from + (to - from) * t);
+}
+
+vec3 _quat_rotate(quat q, vec3 v) {
+    vec3 vector = new vec3(q.x, q.y, q.z);
+    num scalar = q.w;
+
+	return vector * 2.0 * vec3.dot(vector, v) +
+		v * (scalar * scalar - vec3.dot(vector, vector)) +
+		vec3.cross(vector, v) * 2.0 * scalar;
+}
+
+quat _quat_mul(quat Q1, quat Q2) {
+	return new quat(
+		Q2.x * Q1.w + Q2.y * Q1.z - Q2.z * Q1.y + Q2.w * Q1.x,
+		-Q2.x * Q1.z + Q2.y * Q1.w + Q2.z * Q1.x + Q2.w * Q1.y,
+		Q2.x * Q1.y - Q2.y * Q1.x + Q2.z * Q1.w + Q2.w * Q1.z,
+		-Q2.x * Q1.x - Q2.y * Q1.y - Q2.z * Q1.z + Q2.w * Q1.w
+	);
+}
+
+quat _quat_normalized(quat q) {
+	num lenSq = q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w;
+	if (lenSq < quat.epsilon) {
+		return new quat();
+	}
+	num i_len = 1.0 / math.sqrt(lenSq);
+
+	return new quat(
+		q.x * i_len,
+		q.y * i_len,
+		q.z * i_len,
+		q.w * i_len
+	);
+}
+
+quat _quat_conjugate(quat q) {
+	return new quat(
+		-q.x,
+		-q.y,
+		-q.z,
+		q.w
+	);
+}
+
+quat _quat_inverse(quat q) {
+	num lenSq = q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w;
+	if (lenSq < quat.epsilon) {
+		return new quat();
+	}
+	num recip = 1.0 / lenSq;
+	
+    return new quat( // conjugate / norm
+		-q.x * recip,
+		-q.y * recip,
+		-q.z * recip,
+		 q.w * recip
+	);
+}
+
+num _quat_dot(quat a, quat b) {
+	return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
+}
+
+num _quat_lenSq(quat q) {
+	return q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w;
+}
+
+num _quat_len(quat q) {
+	num lenSq = q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w;
+	if (lenSq < quat.epsilon) {
+		return 0.0;
+	}
+	return math.sqrt(lenSq);
+}
+
+bool _quat_compare_orientation(quat left, quat right) {
+	return (math.abs(left.x - right.x) <= quat.epsilon and math.abs(left.y - right.y) <= quat.epsilon and 
+		    math.abs(left.z - right.z) <= quat.epsilon and math.abs(left.w - right.w)  <= quat.epsilon)
+		or (math.abs(left.x + right.x) <= quat.epsilon and math.abs(left.y + right.y) <= quat.epsilon and 
+			math.abs(left.z + right.z) <= quat.epsilon and math.abs(left.w + right.w)  <= quat.epsilon);
+}
+
+bool _quat_compare(quat left, quat right) {
+	return (math.abs(left.x - right.x) <= quat.epsilon and 
+		    math.abs(left.y - right.y) <= quat.epsilon and 
+		    math.abs(left.z - right.z) <= quat.epsilon and 
+		    math.abs(left.w - right.w) <= quat.epsilon);
+}
+
+quat _quat_scale(quat a, num b) {
+	return new quat(
+		a.x * b,
+		a.y * b,
+		a.z * b,
+		a.w * b
+	);
+}
+
+quat _quat_negate(quat q) {
+	return new quat(
+		-q.x,
+		-q.y,
+		-q.z,
+		-q.w
+	);
+}
+
+vec3 _quat_getAxis(quat quat) {
+	return vec3.normalized(new vec3(quat.x, quat.y, quat.z));
+}
+
+num _quat_getAngle(quat quat) {
+	return 2.0 * math.acos(quat.w);
+}
+
+quat _quat_add(quat a, quat b) {
+	return new quat(
+		a.x + b.x,
+		a.y + b.y,
+		a.z + b.z,
+		a.w + b.w
+	);
+}
+
+quat _quat_sub(quat a, quat b) {
+	return new quat(
+		a.x - b.x,
+		a.y - b.y,
+		a.z - b.z,
+		a.w - b.w
+	);
+}
+
+quat _quat_angleAxis(num angle, vec3 axis) {
+	vec3 norm = vec3.normalized(axis);
+	num s = math.sin(angle * 0.5);
+
+	return new quat(
+		norm.x * s,
+		norm.y * s,
+		norm.z * s,
+		math.cos(angle * 0.5)
+	);
+}
+
+quat _quat_fromTo(vec3 from, vec3 to) {
+	vec3 f = vec3.normalized(from);
+	vec3 t = vec3.normalized(to);
+
+	if (f == t) {
+		return new quat();
+	}
+
+	else if (f == t * -1.0) {
+		vec3 ortho = new vec3(1, 0, 0);
+		if (math.abs(f.y) < math.abs(f.x)) {
+			ortho = new vec3(0, 1, 0);
+		}
+		if (math.abs(f.z) < math.abs(f.y) and 
+            math.abs(f.z) < math.abs(f.x)) {
+			ortho = new vec3(0, 0, 1);
+		}
+
+		vec3 axis = vec3.normalized(vec3.cross(f, ortho));
+		return new quat(axis.x, axis.y, axis.z, 0);
+	}
+
+	vec3 half = vec3.normalized(f + t);
+	vec3 axis = vec3.cross(f, half);
+
+	return new quat(
+		axis.x,
+		axis.y,
+		axis.z,
+		vec3.dot(f, half)
+	);
 }
 
 delegate quat   _qdel_fromAngleAxis(num angle, vec3 axis);
 delegate quat   _qdel_fromTo(vec3 from, vec3 to);
+delegate quat   _quat_del_quat(quat q);
 delegate vec3   _qdel_getAxis(quat q);
-delegate num    _qdel_getAngle(quat q);
-delegate quat   _qdel_add(quat a, quat b);
-delegate quat   _qdel_sub(quat a, quat b);
+delegate num    _quat_del_num(quat q);
+delegate quat   _qdel_bin(quat a, quat b);
 delegate quat   _qdel_scale(quat a, num b);
-delegate quat   _qdel_negate(quat q);
 delegate bool   _qdel_compare(quat left, quat right);
-delegate bool   _qdel_sameOrientation(quat left, quat right);
+delegate num    _qdel_dot(quat a, quat b);
+delegate vec3   _quat_del_quat_vec_vec(quat q, vec3 v);
+delegate quat   _quat_del_mix(quat from, quat to, num t);
 
+_quat quat = new _quat();
 
-/*float dot(const quat& a, const quat& b);
-float lenSq(const quat& q);
-float len(const quat& q);
-void normalize(quat& q);
-quat normalized(const quat& q);
-quat conjugate(const quat& q);
-quat inverse(const quat& q);
-quat operator*(const quat& Q1, const quat& Q2);
-vec3 operator*(const quat& q, const vec3& v);
-quat mix(const quat& from, const quat& to, float t);
-quat nlerp(const quat& from, const quat& to, float t);
-quat operator^(const quat& q, float f);
-quat operator^(const quat& q, float f);
-quat slerp(const quat& start, const quat& end, float t);
-quat lookRotation(const vec3& direcion, const vec3& up);
+/* TODO:
 mat4 quatToMat4(const quat& q);
 quat mat4ToQuat(const mat4& m);*/
 """;

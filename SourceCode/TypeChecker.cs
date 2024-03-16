@@ -529,7 +529,7 @@ namespace CScript {
                             }
                         }
                     }
-                    else if (rightType == "vec3" || rightType == "vec2" || rightType == "vec4") {
+                    else if (rightType == "vec2" || rightType == "vec3" || rightType == "vec4" || rightType == "quat") {
                         ExpressionTypes.Add(e, "string");
                         return e;
                     }
@@ -547,6 +547,10 @@ namespace CScript {
                     ExpressionTypes.Add(e, "vec4");
                     return e;
                 }
+                else if (leftType == "quat" && rightType == "quat") {
+                    ExpressionTypes.Add(e, "quat");
+                    return e;
+                }
             }
             else if (e.Operator.Symbol == Symbol.MINUS) {
                 if (leftType == "vec3" && rightType == "vec3") {
@@ -561,6 +565,10 @@ namespace CScript {
                     ExpressionTypes.Add(e, "vec4");
                     return e;
                 }
+                else if (leftType == "quat" && rightType == "quat") {
+                    ExpressionTypes.Add(e, "quat");
+                    return e;
+                }
             }
             else if (e.Operator.Symbol == Symbol.STAR) {
                 if (leftType == "vec3" && rightType == "num") {
@@ -573,6 +581,19 @@ namespace CScript {
                 }
                 if (leftType == "vec4" && rightType == "num") {
                     ExpressionTypes.Add(e, "vec4");
+                    return e;
+                }
+
+                if (leftType == "quat" && rightType == "num") {
+                    ExpressionTypes.Add(e, "quat");
+                    return e;
+                }
+                if (leftType == "quat" && rightType == "vec3") {
+                    ExpressionTypes.Add(e, "vec3");
+                    return e;
+                }
+                else if (leftType == "quat" && rightType == "quat") {
+                    ExpressionTypes.Add(e, "quat");
                     return e;
                 }
             }
@@ -598,7 +619,11 @@ namespace CScript {
                 return e;
             }
 
-            Compiler.Error("Type Checker", "Invalid operator " + e.Operator.Lexeme + " between: " + leftType + " and " + rightType, e.Operator.Location);
+            string err = "Invalid operator " + e.Operator.Lexeme + " between: " + leftType + " and " + rightType;
+            if (CurrentFunction != null) {
+                err += ", while parsing: " + CurrentFunction.Name.Lexeme;
+            }
+            Compiler.Error("Type Checker", err, e.Operator.Location);
             return null;
         }
         public object Visit(ParseTree.Expression.Call e) {

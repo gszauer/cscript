@@ -66,6 +66,31 @@ namespace CScript {
             "_vec4_nlerp",
             "_vec4_compare"
         };
+        protected static List<string> QuatFunctions = new List<string>() {
+            "_quat_angleAxis",
+            "_quat_fromTo",
+            "_quat_lookRotation",
+            "_quat_getAxis",
+            "_quat_getAngle",
+            "_quat_add",
+            "_quat_sub",
+            "_quat_mul",
+            "_quat_rotate",
+            "_quat_scale",
+            "_quat_negate",
+            "_quat_compare",
+            "_quat_compare_orientation",
+            "_quat_dot",
+            "_quat_lenSq",
+            "_quat_len",
+            "_quat_normalized",
+            "_quat_conjugate",
+            "_quat_inverse",
+            "_quat_mix",
+            "_quat_nlerp",
+            "_quat_slerp",
+            "_quat_pow"
+        };
         public Javascript(List<ParseTree.Declaration.File> parseTree, TypeDatabase types, TypeChecker checker) {
             ExpressionTypes = checker.ExpressionTypes;
             js = "";
@@ -100,7 +125,9 @@ namespace CScript {
         }
         public object Visit(ParseTree.Declaration.Variable d) { // Done
             string dName = d.Name.Lexeme;
-            if (dName == "array" || dName == "map" || dName == "string" || dName == "print" || dName == "Math" || dName == "math" || dName == "vec3" || dName == "vec2" || dName == "vec4") {
+            if (dName == "array" || dName == "map" || dName == "string" || dName == "print" || 
+                dName == "Math" || dName == "math" || dName == "vec3" || dName == "vec2" || 
+                dName == "vec4" || dName == "quat") {
                 return d;
             }
 
@@ -138,7 +165,8 @@ namespace CScript {
             string dName = d.Name.Lexeme;
             if (Vec2Functions.Contains(dName) ||
                 Vec3Functions.Contains(dName) ||
-                Vec4Functions.Contains(dName)) {
+                Vec4Functions.Contains(dName) ||
+                QuatFunctions.Contains(dName)) {
                 return d;
             }
 
@@ -147,7 +175,7 @@ namespace CScript {
         protected object VisitForReal(ParseTree.Declaration.Function d) {  // Done
             string dName = d.Name.Lexeme;
 
-            if (Vec3Functions.Contains(dName) || Vec2Functions.Contains(dName) || Vec4Functions.Contains(dName)) {
+            if (Vec3Functions.Contains(dName) || Vec2Functions.Contains(dName) || Vec4Functions.Contains(dName) || QuatFunctions.Contains(dName)) {
                 js += "function (";
             }
             else {
@@ -193,7 +221,8 @@ namespace CScript {
         }
         public object Visit(ParseTree.Declaration.Struct d) {
             string dName = d.Name.Lexeme;
-            if (dName == "_array" || dName == "_map" || dName == "_string" || dName == "_math" || dName == "vec3" || dName == "vec2" || dName == "vec4") {
+            if (dName == "_array" || dName == "_map" || dName == "_string" || dName == "_math" || 
+                dName == "vec3" || dName == "vec2" || dName == "vec4" || dName == "quat") {
                 return d;
             }
 
@@ -206,6 +235,9 @@ namespace CScript {
             else if (dName == "_vec4") {
                 dName = "vec4";
             }
+            else if (dName == "_quat") {
+                dName = "quat";
+            }
 
             js += "class " + dName + " {\n";
 
@@ -216,7 +248,7 @@ namespace CScript {
             else if (dName == "vec3") {
                 js += "x, y, z";
             }
-            else if (dName == "vec4") {
+            else if (dName == "vec4" || dName == "quat") {
                 js += "x, y, z, w";
             }
             else {
@@ -248,6 +280,12 @@ namespace CScript {
                 js += "\t\tthis.z = (typeof z === \"undefined\")? 0.0 : z;\n";
                 js += "\t\tthis.w = (typeof w === \"undefined\")? 0.0 : w;\n";
             }
+            else if (dName == "quat") {
+                js += "\t\tthis.x = (typeof x === \"undefined\")? 0.0 : x;\n";
+                js += "\t\tthis.y = (typeof y === \"undefined\")? 0.0 : y;\n";
+                js += "\t\tthis.z = (typeof z === \"undefined\")? 0.0 : z;\n";
+                js += "\t\tthis.w = (typeof w === \"undefined\")? 1.0 : w;\n";
+            }
             else {
                 for (int i = 0, size = d.Members.Count; i < size; ++i) {
                     string nam = d.Members[i].Name.Lexeme;
@@ -269,7 +307,7 @@ namespace CScript {
 
             js += "\t}\n"; // End constructor
 
-            if (dName == "vec3" || dName == "vec2" || dName == "vec4") {
+            if (dName == "vec3" || dName == "vec2" || dName == "vec4" || dName == "quat") {
                 for (int i = 0, size = d.Members.Count; i < size; ++i) {
                     string nam = d.Members[i].Name.Lexeme;
                     if (nam == "delete") {
@@ -511,7 +549,20 @@ namespace CScript {
                     js += ".w + \")\")";
                     return e;
                 }
-                else if (leftType == rightType && (rightType == "vec2" || rightType == "vec3" || rightType == "vec4")) {
+                else if (leftType == "string" && rightType == "quat") {
+                    e.Left.Accept(this);
+                    js += " + (\"(\" + ";
+                    e.Right.Accept(this);
+                    js += ".x + \", \" + ";
+                    e.Right.Accept(this);
+                    js += ".y + \", \" + ";
+                    e.Right.Accept(this);
+                    js += ".z + \", \" + ";
+                    e.Right.Accept(this);
+                    js += ".w + \")\")";
+                    return e;
+                }
+                else if (leftType == rightType && (rightType == "vec2" || rightType == "vec3" || rightType == "vec4" || rightType == "quat")) {
                     js += leftType + ".add(";
                     e.Left.Accept(this);
                     js += ", ";
@@ -521,7 +572,7 @@ namespace CScript {
                 }
             }
             else if (e.Operator.Symbol == Symbol.MINUS) {
-                if (leftType == rightType && (rightType == "vec2" || rightType == "vec3" || rightType == "vec4")) {
+                if (leftType == rightType && (rightType == "vec2" || rightType == "vec3" || rightType == "vec4" || rightType == "quat")) {
                     js += rightType + ".sub(";
                     e.Left.Accept(this);
                     js += ", ";
@@ -541,7 +592,7 @@ namespace CScript {
                 }
             }
             else if (e.Operator.Symbol == Symbol.STAR) {
-                if (leftType == rightType && (rightType == "vec2" || rightType == "vec3" || rightType == "vec4")) {
+                if (leftType == rightType && (rightType == "vec2" || rightType == "vec3" || rightType == "vec4" || rightType == "quat")) {
                     js += rightType + ".mul(";
                     e.Left.Accept(this);
                     js += ", ";
@@ -549,7 +600,7 @@ namespace CScript {
                     js += ")";
                     return e;
                 }
-                else if ((rightType == "vec2" || rightType == "vec3" || rightType == "vec4") && rightType == "num") {
+                else if ((rightType == "vec2" || rightType == "vec3" || rightType == "vec4" || rightType == "quat") && rightType == "num") {
                     js += rightType + ".scale(";
                     e.Left.Accept(this);
                     js += ", ";
@@ -559,7 +610,7 @@ namespace CScript {
                 }
             }
             else if (e.Operator.Symbol == Symbol.EQUAL_EQUAL) {
-                if (leftType == rightType && (rightType == "vec2" || rightType == "vec3" || rightType == "vec4")) {
+                if (leftType == rightType && (rightType == "vec2" || rightType == "vec3" || rightType == "vec4" || rightType == "quat")) {
                     js += rightType + ".compare(";
                     e.Left.Accept(this);
                     js += ", ";
@@ -569,7 +620,7 @@ namespace CScript {
                 }
             }
             else if (e.Operator.Symbol == Symbol.NOT_EQUAL) {
-                if (leftType == rightType && (rightType == "vec2" || rightType == "vec3" || rightType == "vec4")) {
+                if (leftType == rightType && (rightType == "vec2" || rightType == "vec3" || rightType == "vec4" || rightType == "quat")) {
                     js += "!" + rightType + ".compare(";
                     e.Left.Accept(this);
                     js += ", ";
@@ -872,7 +923,25 @@ namespace CScript {
         public object Visit(ParseTree.Expression.Cast e) {
             if (e.Target.GetPath() == "string") {
                 string objectType = ExpressionTypes[e.Object];
-                if (objectType == "vec3") {
+                if (objectType == "vec2") {
+                    js += "(\"(\" + ";
+                    e.Object.Accept(this);
+                    js += ".x + \", \" + ";
+                    e.Object.Accept(this);
+                    js += ".y + \")\")";
+                    return e;
+                }
+                else if (objectType == "vec3") {
+                    js += "(\"(\" + ";
+                    e.Object.Accept(this);
+                    js += ".x + \", \" + ";
+                    e.Object.Accept(this);
+                    js += ".y + \", \" + ";
+                    e.Object.Accept(this);
+                    js += ".z + \")\")";
+                    return e;
+                }
+                else if (objectType == "vec4" || objectType == "quat") {
                     js += "(\"(\" + ";
                     e.Object.Accept(this);
                     js += ".x + \", \" + ";

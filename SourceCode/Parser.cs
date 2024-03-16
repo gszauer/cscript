@@ -4,6 +4,7 @@
             public List<Token> Tokens { get; protected set; }
             public List<ParseTree.Declaration.File> Tree { get; protected set; }
             public TypeDatabase Types { get; protected set; }
+            public string CurrentFunction = null;
 
             public int Current = 0;
             public State(List<Token> tokens, TypeDatabase types) {
@@ -12,6 +13,7 @@
                 Types = types;
                 Types.AddTokens(tokens);
                 Current = 0;
+                CurrentFunction = null;
             }
         }
 
@@ -61,7 +63,7 @@
             }
             else {
                 string lex = name.Lexeme;
-                if (lex == "vec3" || lex == "vec2" || lex == "vec4") {
+                if (lex == "vec2" || lex == "vec3" || lex == "vec4" || lex == "quat") {
                     allowStruct = true;
                 }
             }
@@ -610,6 +612,8 @@
                 name = Consume(s, Symbol.IDENTIFIER);
             }
 
+            s.CurrentFunction = name.Lexeme;
+
             List<ParseTree.Declaration.Function.Paramater> paramaters = new List<ParseTree.Declaration.Function.Paramater>();
             Consume(s, Symbol.LPAREN);
             while (!IsAtEnd(s) && !Check(s, Symbol.RPAREN)) {
@@ -634,6 +638,9 @@
 
             ParseTree.Declaration.Function result = new ParseTree.Declaration.Function(type, name, paramaters, body);
             s.Types.RegisterFunction(result);
+
+            s.CurrentFunction = null;
+
             return result;
         }
         protected static ParseTree.Statement.Block ParseBlockStatement(State s) {
@@ -715,6 +722,11 @@
                 }
             }
             error += "), Got: " + peek.Symbol.ToString() + " / " + peek.Lexeme;
+
+            if (s.CurrentFunction != null) {
+                error += " while parsing: " + s.CurrentFunction;
+            }
+
 
             Error("Could not consume symbol: " + error, peek.Location);
             return null;
