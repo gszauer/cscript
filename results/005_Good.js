@@ -526,33 +526,59 @@ class quat {
 
 }
 
-function main(args) {
-	let right = new vec3(1, 0, 0);
-	let up = new vec3(0, 1, 0);
-	let forward = new vec3(0, 0, 1);
-	let half = vec3.lerp(right, up, 0.5);
-	console.log("right: " + ("(" + right.x + ", " + right.y + ", " + right.z + ")"));
-	console.log("up: " + (("(" + up.x + ", " + up.y + ", " + up.z + ")")));
-	console.log("forward: " + ("(" + forward.x + ", " + forward.y + ", " + forward.z + ")"));
-	console.log("half: " + ("(" + half.x + ", " + half.y + ", " + half.z + ")"));
-	console.log("dot: " + vec3.dot(right, up));
-	let a = vec3.add(up, right);
-	let b = vec3.sub(up, right);
-	let c = vec3.mul(up, right);
-	let e = vec3.div(up, right);
-	let d = up * 0.5;
-	let same = vec3.compare(up, right);
-	let thisTime = vec3.compare(up, new vec3(0, 1, 0));
-	let hammerTime = !vec3.compare(up, new vec3(0, 1, 0));
-	if (same) {
-		console.log("wrong");
+class Vector3 {
+	constructor(x, y, z) {
+		this.x = (typeof x === "undefined")? 0 : x;
+		this.y = (typeof y === "undefined")? 0 : y;
+		this.z = (typeof z === "undefined")? 0 : z;
 	}
-	else if (thisTime) {
-		console.log("right!");
+}
+
+function Vector3Cross(a, b) {
+	let result = new Vector3();
+	result.x = a.y * b.z - a.z * b.y;
+	result.y = a.z * b.x - a.x * b.z;
+	result.z = a.x * b.y - a.y * b.x;
+	return result;
+}
+
+function main(args) {
+	let right = new Vector3(1.0, 0.0, 0.0);
+	let up = new Vector3(0.0, 1.0, 0.0);
+	let forward = new Vector3(0.0, 0.0, 1.0);
+	let zero = new Vector3();
+	let one = new Vector3(1.0);
+	let left = Vector3Cross(up, forward);
+	if (up.x < 7.0) {
+		left = Vector3Cross(forward, up);
+	}
+	else if (up.y < 7.0) {
+		left = zero;
 	}
 	else {
-		console.log("wrong");
+		right = left;
 	}
-	return 0;
+	for (let x = 0; x < 5; ++x);
+	for (let x = 5; x >= 0; --x) {
+		left.x -= x;
+	}
+	while (true) {
+		break;
+	}
+	while () {
+		if (left.x > 5) {
+			break;
+		}
+		else {
+			continue;
+		}
+	}
+	{
+		{
+			{
+				let z = 5.0;
+			}
+		}
+	}
 }
 

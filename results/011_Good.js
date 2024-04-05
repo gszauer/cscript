@@ -526,33 +526,83 @@ class quat {
 
 }
 
+class Game {
+	constructor(level, lives) {
+		this.level = (typeof level === "undefined")? 0 : level;
+		this.lives = (typeof lives === "undefined")? 0 : lives;
+	}
+}
+
 function main(args) {
-	let right = new vec3(1, 0, 0);
-	let up = new vec3(0, 1, 0);
-	let forward = new vec3(0, 0, 1);
-	let half = vec3.lerp(right, up, 0.5);
-	console.log("right: " + ("(" + right.x + ", " + right.y + ", " + right.z + ")"));
-	console.log("up: " + (("(" + up.x + ", " + up.y + ", " + up.z + ")")));
-	console.log("forward: " + ("(" + forward.x + ", " + forward.y + ", " + forward.z + ")"));
-	console.log("half: " + ("(" + half.x + ", " + half.y + ", " + half.z + ")"));
-	console.log("dot: " + vec3.dot(right, up));
-	let a = vec3.add(up, right);
-	let b = vec3.sub(up, right);
-	let c = vec3.mul(up, right);
-	let e = vec3.div(up, right);
-	let d = up * 0.5;
-	let same = vec3.compare(up, right);
-	let thisTime = vec3.compare(up, new vec3(0, 1, 0));
-	let hammerTime = !vec3.compare(up, new vec3(0, 1, 0));
-	if (same) {
-		console.log("wrong");
+	let saves = [new Game(1, 2), new Game(2, 3)];
+	console.log("Num saves: " + saves.length);
+	console.log("Save 0 level: " + saves[0].level + ", Save 0 lives: " + saves[0].lives);
+	console.log("Save 1 level: " + saves[1].level + ", Save 1 lives: " + saves[1].lives);
+	let fruits = ["apple", "bannana", "orange", "bannana", "grape"];
+	let out = "Fruits: ";
+	for (let i = 0, size = fruits.length; i < size; ++i) {
+		out += fruits[i];
+		if (i < size - 1) {
+			out += ", ";
+		}
 	}
-	else if (thisTime) {
-		console.log("right!");
+	console.log("\n" + out);
+	console.log("First instance of \"bannana\": " + fruits.findIndex((_js__array_find_target_) => _js__array_find_target_ === ("bannana")));
+	console.log("Last instance of \"bannana\": " + fruits.findLastIndex((_js__array_find_target_) => _js__array_find_target_ === ("bannana")));
+	console.log("[0] = " + fruits.at(0) + ", [1] = " + fruits.at(1));
+	console.log("[2] = " + fruits[2] + ", [3] = " + fruits[3]);
+	let veggies = ["Carrots", "Broccoli", "ASparagus"];
+	let food = fruits.concat(veggies);
+	out = "\nFood: \n\t";
+	for (let i = 0, size = food.length; i < size; ++i) {
+		out += food[i];
+		if (i < size - 1) {
+			out += ", ";
+		}
 	}
-	else {
-		console.log("wrong");
-	}
+	console.log(out);
+	out = "\nFruits: \n\t" + fruits.join(", ");
+	console.log(out);
+	console.log("removing grape: " + fruits.pop());
+	out = "\nFruits: \n\t" + fruits.join(", ");
+	console.log(out);
+	console.log("removing apple: " + fruits.shift());
+	out = "\nFruits: \n\t" + fruits.join(", ");
+	console.log(out);
+	let names = ["john", "kate", "marry", "sue", "jim", "bob"];
+	out = "\nNames: " + names.join(", ");
+	console.log(out);
+	let boyNames = names.slice(0, (0) + (1)).concat(names.slice(4, (4) + (2)));
+	out = "\nBoys: " + boyNames.join(", ");
+	console.log(out);
+	names.sort();
+	out = "\nSorted: " + names.join(", ");
+	console.log(out);
+	names.sort(ReverseSort);
+	out = "\nReversed: " + names.join(", ");
+	console.log(out);
+	names.reverse();
+	out = "\nSorted: " + names.join(", ");
+	console.log(out);
+	names.splice(1, 2);
+	out = "\nBye jim and john: " + names.join(", ");
+	console.log(out);
+	names.push("jim");
+	names.splice(1, 0, "john");
+	out = "\nWelcome back: " + names.join(", ");
+	console.log(out);
+	let names2 = names.slice(0, names.length);
+	names2.sort();
+	out = "\nOriginal: " + names.join(", ");
+	out += "\nCopy: " + names2.join(", ");
+	console.log(out);
+	console.log("names1: " + names.length + ", names2: " + names2.length);
+	names2.length = 0;
+	console.log("names1: " + names.length + ", names2: " + names2.length);
 	return 0;
+}
+
+function ReverseSort(left, right) {
+	return 1;
 }
 

@@ -526,32 +526,56 @@ class quat {
 
 }
 
-function main(args) {
-	let right = new vec3(1, 0, 0);
-	let up = new vec3(0, 1, 0);
-	let forward = new vec3(0, 0, 1);
-	let half = vec3.lerp(right, up, 0.5);
-	console.log("right: " + ("(" + right.x + ", " + right.y + ", " + right.z + ")"));
-	console.log("up: " + (("(" + up.x + ", " + up.y + ", " + up.z + ")")));
-	console.log("forward: " + ("(" + forward.x + ", " + forward.y + ", " + forward.z + ")"));
-	console.log("half: " + ("(" + half.x + ", " + half.y + ", " + half.z + ")"));
-	console.log("dot: " + vec3.dot(right, up));
-	let a = vec3.add(up, right);
-	let b = vec3.sub(up, right);
-	let c = vec3.mul(up, right);
-	let e = vec3.div(up, right);
-	let d = up * 0.5;
-	let same = vec3.compare(up, right);
-	let thisTime = vec3.compare(up, new vec3(0, 1, 0));
-	let hammerTime = !vec3.compare(up, new vec3(0, 1, 0));
-	if (same) {
-		console.log("wrong");
+class Vector3 {
+	constructor(x, y, z) {
+		this.x = (typeof x === "undefined")? 0 : x;
+		this.y = (typeof y === "undefined")? 0 : y;
+		this.z = (typeof z === "undefined")? 0 : z;
 	}
-	else if (thisTime) {
-		console.log("right!");
+}
+
+const Directions = {
+	NORTH: 0,
+	SOUTH: 4,
+	EAST: 5,
+	WEST: 6
+}
+
+var globalSeven = 8;
+
+var globalZero = 0;
+
+var defDir = Directions.NORTH;
+
+var worldUp = new Vector3(0, 1, 0);
+
+function main(args) {
+	let xxx = 666;
+	if (xxx > 5.0) {
+		worldUp = new Vector3(0, -1, 0);
+	}
+	if (5 > 6) {
+		let seven = 8;
+	}
+	else if (8 < 7) {
+		let never = true;
+	}
+	if ('c' < 36) {
+		let seven = 8;
+	}
+	else if (false) {
 	}
 	else {
-		console.log("wrong");
+		let hello = "world";
+	}
+	while (true) {
+		console.log("TrUe");
+	}
+	for (; ; ) {
+	}
+	for (let x = 0; ; );
+	for (let y = 0, z = 9; y < 3; ++y) {
+		console.log((""+y));
 	}
 	return 0;
 }

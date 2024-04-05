@@ -526,33 +526,45 @@ class quat {
 
 }
 
+class Vector3 {
+	constructor(x, y, z) {
+		this.x = (typeof x === "undefined")? 0 : x;
+		this.y = (typeof y === "undefined")? 0 : y;
+		this.z = (typeof z === "undefined")? 0 : z;
+	}
+}
+
+class Quaternion {
+	constructor(w, x, y, z) {
+		this.w = (typeof w === "undefined")? 0 : w;
+		this.x = (typeof x === "undefined")? 0 : x;
+		this.y = (typeof y === "undefined")? 0 : y;
+		this.z = (typeof z === "undefined")? 0 : z;
+	}
+}
+
+class Transform {
+	constructor(position, rotation, scale, name) {
+		this.position = (typeof position === "undefined")? null : position;
+		this.rotation = (typeof rotation === "undefined")? null : rotation;
+		this.scale = (typeof scale === "undefined")? null : scale;
+		this.name = (typeof name === "undefined")? null : name;
+	}
+}
+
+var Transform_Parent = new Map();
+
+var Transform_FirstChild = new Map();
+
+var Transform_NextSibling = new Map();
+
 function main(args) {
-	let right = new vec3(1, 0, 0);
-	let up = new vec3(0, 1, 0);
-	let forward = new vec3(0, 0, 1);
-	let half = vec3.lerp(right, up, 0.5);
-	console.log("right: " + ("(" + right.x + ", " + right.y + ", " + right.z + ")"));
-	console.log("up: " + (("(" + up.x + ", " + up.y + ", " + up.z + ")")));
-	console.log("forward: " + ("(" + forward.x + ", " + forward.y + ", " + forward.z + ")"));
-	console.log("half: " + ("(" + half.x + ", " + half.y + ", " + half.z + ")"));
-	console.log("dot: " + vec3.dot(right, up));
-	let a = vec3.add(up, right);
-	let b = vec3.sub(up, right);
-	let c = vec3.mul(up, right);
-	let e = vec3.div(up, right);
-	let d = up * 0.5;
-	let same = vec3.compare(up, right);
-	let thisTime = vec3.compare(up, new vec3(0, 1, 0));
-	let hammerTime = !vec3.compare(up, new vec3(0, 1, 0));
-	if (same) {
-		console.log("wrong");
-	}
-	else if (thisTime) {
-		console.log("right!");
-	}
-	else {
-		console.log("wrong");
-	}
-	return 0;
+	let rootTransform = new Transform();
+	let rootTransform1 = new Transform(null);
+	let aTransform = new Transform(new Vector3(0, 1, 0));
+	let bTransform = new Transform(new Vector3(), new Quaternion());
+	let cTransform = new Transform(new Vector3(0), new Quaternion(), new Vector3(1, 1, 1));
+	rootTransform.name = "Root";
+	let allTransforms = new Map([["Root", rootTransform], ["A", aTransform]]);
 }
 

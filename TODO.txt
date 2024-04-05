@@ -1,8 +1,0 @@
-TODO LIST:
-    Add vec2
-    Add vec3
-    Add vec4
-    Add quat
-    Add mat2
-    Add mat3
-    Add mat4

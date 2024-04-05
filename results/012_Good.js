@@ -527,32 +527,45 @@ class quat {
 }
 
 function main(args) {
-	let right = new vec3(1, 0, 0);
-	let up = new vec3(0, 1, 0);
-	let forward = new vec3(0, 0, 1);
-	let half = vec3.lerp(right, up, 0.5);
-	console.log("right: " + ("(" + right.x + ", " + right.y + ", " + right.z + ")"));
-	console.log("up: " + (("(" + up.x + ", " + up.y + ", " + up.z + ")")));
-	console.log("forward: " + ("(" + forward.x + ", " + forward.y + ", " + forward.z + ")"));
-	console.log("half: " + ("(" + half.x + ", " + half.y + ", " + half.z + ")"));
-	console.log("dot: " + vec3.dot(right, up));
-	let a = vec3.add(up, right);
-	let b = vec3.sub(up, right);
-	let c = vec3.mul(up, right);
-	let e = vec3.div(up, right);
-	let d = up * 0.5;
-	let same = vec3.compare(up, right);
-	let thisTime = vec3.compare(up, new vec3(0, 1, 0));
-	let hammerTime = !vec3.compare(up, new vec3(0, 1, 0));
-	if (same) {
-		console.log("wrong");
-	}
-	else if (thisTime) {
-		console.log("right!");
+	let inventory = new Map([["bannana", 1], ["apple", 2], ["strawberry", 0]]);
+	console.log(PrintMap(inventory));
+	inventory.clear();
+	console.log(PrintMap(inventory));
+	let durability = new Map();
+	inventory.set("sword", 1);
+	inventory.set("shield", 2);
+	inventory.set("boots", 1);
+	console.log(PrintMap(inventory));
+	if (inventory.has("shield")) {
+		console.log("Num shields: " + inventory.get("shield"));
 	}
 	else {
-		console.log("wrong");
+		console.log("No shields");
+	}
+	console.log("remove shield");
+	inventory.delete("shield");
+	if (inventory.has("shield")) {
+		console.log("Num shields: " + inventory.get("shield"));
+	}
+	else {
+		console.log("No shields");
 	}
 	return 0;
+}
+
+function PrintMap(info) {
+	let result = "";
+	let keys_ = Array.from(info.keys());
+	for (let i = 0, size = keys_.length; i < size; ++i) {
+		let k = keys_[i];
+		result += keys_.at(i) + ": " + info.get(k);
+		if (i < size - 1) {
+			result += "\n";
+		}
+	}
+	if (result == "") {
+		return "Empty";
+	}
+	return result;
 }
 

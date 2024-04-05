@@ -5,6 +5,9 @@
 // BUILT IN FUNCTIONS
 delegate void _print(string str);
 _print print = null;
+
+delegate void _assert(bool condition, string message);
+_assert assert = null;
 """;
         protected static string ArrayAPI =
 """
@@ -1022,6 +1025,133 @@ _quat quat = new _quat();
 /* TODO:
 mat4 quatToMat4(const quat& q);
 quat mat4ToQuat(const mat4& m);*/
+""";
+        protected static string MatrixAPI =
+"""
+struct mat4 {
+    num xx; num xy; num xz; num xw;
+    num yx; num yy; num yz; num yw;
+    num zx; num zy; num zz; num zw;
+    num tx; num ty; num tz; num tw;
+}
+
+struct _mat4 {
+    _matdel_get      get = _mat4_get;
+    _matdel_set      set = _mat4_set;
+}
+
+num _mat4_get(mat4 m, num index) {
+    if (index == 0) {
+        return m.xx;
+    }
+    else if (index == 1) {
+        return m.xy;
+    }
+    else if (index == 2) {
+        return m.xz;
+    }
+    else if (index == 3) {
+        return m.xw;
+    }
+    else if (index == 4) {
+        return m.yx;
+    }
+    else if (index == 5) {
+        return m.yy;
+    }
+    else if (index == 6) {
+        return m.yz;
+    }
+    else if (index == 7) {
+        return m.yw;
+    }
+    else if (index == 8) {
+        return m.zx;
+    }
+    else if (index == 9) {
+        return m.zy;
+    }
+    else if (index == 10) {
+        return m.zz;
+    }
+    else if (index == 11) {
+        return m.zw;
+    }
+    else if (index == 12) {
+        return m.tx;
+    }
+    else if (index == 13) {
+        return m.ty;
+    }
+    else if (index == 14) {
+        return m.tz;
+    }
+    else if (index == 15) {
+        return m.tw;
+    }
+
+    assert(false, "mat4 invalid index: " + index);
+    return 0.0;
+}
+
+void _mat4_set(mat4 m, num index, num val) {
+    if (index == 0) {
+        m.xx = val;
+    }
+    else if (index == 1) {
+        m.xy = val;
+    }
+    else if (index == 2) {
+        m.xz = val;
+    }
+    else if (index == 3) {
+        m.xw = val;
+    }
+    else if (index == 4) {
+        m.yx = val;
+    }
+    else if (index == 5) {
+        m.yy = val;
+    }
+    else if (index == 6) {
+        m.yz = val;
+    }
+    else if (index == 7) {
+        m.yw = val;
+    }
+    else if (index == 8) {
+        m.zx = val;
+    }
+    else if (index == 9) {
+        m.zy = val;
+    }
+    else if (index == 10) {
+        m.zz = val;
+    }
+    else if (index == 11) {
+        m.zw = val;
+    }
+    else if (index == 12) {
+        m.tx = val;
+    }
+    else if (index == 13) {
+        m.ty = val;
+    }
+    else if (index == 14) {
+        m.tz = val;
+    }
+    else if (index == 15) {
+        m.tw = val;
+    }
+    else {
+        assert(false, "mat4 invalid index: " + index);
+    }
+}
+
+delegate num _matdel_get(mat4 m, num index);
+delegate void _matdel_get(mat4 m, num index, num index);
+
+_mat4 mat4 = new _mat4();
 """;
         public static string InternalCode {
             get {

@@ -527,32 +527,40 @@ class quat {
 }
 
 function main(args) {
-	let right = new vec3(1, 0, 0);
-	let up = new vec3(0, 1, 0);
-	let forward = new vec3(0, 0, 1);
-	let half = vec3.lerp(right, up, 0.5);
-	console.log("right: " + ("(" + right.x + ", " + right.y + ", " + right.z + ")"));
-	console.log("up: " + (("(" + up.x + ", " + up.y + ", " + up.z + ")")));
-	console.log("forward: " + ("(" + forward.x + ", " + forward.y + ", " + forward.z + ")"));
-	console.log("half: " + ("(" + half.x + ", " + half.y + ", " + half.z + ")"));
-	console.log("dot: " + vec3.dot(right, up));
-	let a = vec3.add(up, right);
-	let b = vec3.sub(up, right);
-	let c = vec3.mul(up, right);
-	let e = vec3.div(up, right);
-	let d = up * 0.5;
-	let same = vec3.compare(up, right);
-	let thisTime = vec3.compare(up, new vec3(0, 1, 0));
-	let hammerTime = !vec3.compare(up, new vec3(0, 1, 0));
-	if (same) {
-		console.log("wrong");
+	let four = Math.sqrt(16) * -1.0;
+	four = Math.abs(four);
+	console.log("Four: " + four);
+	let display = "Hello, world";
+	let firstO = display.indexOf('o');
+	let lastO = display.lastIndexOf("o");
+	let comma = display.indexOf(",");
+	console.log("" + display.at(firstO) + display[comma] + display[lastO]);
+	if (display.startsWith('H')) {
+		console.log("true 1");
 	}
-	else if (thisTime) {
-		console.log("right!");
+	if (display.startsWith("Hel")) {
+		console.log("true 2");
 	}
-	else {
-		console.log("wrong");
+	if (!display.startsWith("He3")) {
+		console.log("true 3");
 	}
+	display = "hello my love";
+	let exploded = display.split(" ");
+	display = exploded.join("-");
+	console.log(display);
+	let x1 = "hello";
+	let x2 = " world";
+	display = x1.concat(x2);
+	console.log(display);
+	display = display.toUpperCase();
+	console.log(display);
+	display = display.toLowerCase();
+	console.log(display);
+	display = "hello my love";
+	let lova = display.substring(9, (4) + (9) );
+	console.log(lova);
+	lova = display.replace("hello", "hola");
+	console.log(lova);
 	return 0;
 }
 
